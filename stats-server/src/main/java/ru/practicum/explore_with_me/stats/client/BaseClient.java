@@ -1,4 +1,4 @@
-package ru.practicum.explore_with_me.client;
+package ru.practicum.explore_with_me.stats.client;
 
 import java.util.List;
 import java.util.Map;

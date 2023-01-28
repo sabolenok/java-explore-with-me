@@ -7,10 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
-import ru.practicum.explore_with_me.client.BaseClient;
+import ru.practicum.explore_with_me.stats.client.BaseClient;
 import ru.practicum.explore_with_me.stats.dto.StatDto;
 
-@Service
+//@Service
 public class StatsClient extends BaseClient {
 
     @Autowired
