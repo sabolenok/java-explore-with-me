@@ -2,14 +2,11 @@ package ru.practicum.explore_with_me.stats;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.stats.dto.StatDto;
 import ru.practicum.explore_with_me.stats.dto.StatWithCount;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 //@RequestMapping()

@@ -21,14 +21,14 @@ public class StatsService {
     @Getter
     @Setter
     private StatsRepository repository;
-    private final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Transactional(readOnly = true)
     public List<StatWithCount> getStats(String start, String end, List<String> uris, boolean unique) {
         List<Stat> foundStats;
         List<StatWithCount> stats = new ArrayList<>();
-        LocalDateTime startDate = LocalDateTime.parse(start, FORMATTER);
-        LocalDateTime endDate = LocalDateTime.parse(end, FORMATTER);
+        LocalDateTime startDate = LocalDateTime.parse(start, formatter);
+        LocalDateTime endDate = LocalDateTime.parse(end, formatter);
         StatWithCount statWithCount = null;
         String previousApp = new String();
         String previousUri = new String();
