@@ -8,9 +8,8 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.explore_with_me.stats.client.BaseClient;
-import ru.practicum.explore_with_me.stats.dto.StatDto;
 
-//@Service
+@Service
 public class StatsClient extends BaseClient {
 
     @Autowired
@@ -23,8 +22,8 @@ public class StatsClient extends BaseClient {
         );
     }
 
-    public ResponseEntity<Object> addStat(StatDto statDto) {
-        return post("", statDto);
+    public ResponseEntity<Object> addStat(Stat stat) {
+        return post("", stat);
     }
 
     public ResponseEntity<Object> getStats() {
