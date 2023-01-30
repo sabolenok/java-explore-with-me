@@ -2,7 +2,8 @@ package ru.practicum.explore_with_me.stats;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
-import ru.practicum.explore_with_me.stats.dto.StatDto;
+import ru.practicum.explore_with_me.dto.Stat;
+import ru.practicum.explore_with_me.dto.StatDto;
 
 @Component
 public class StatsMapper {

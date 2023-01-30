@@ -1,6 +1,7 @@
 package ru.practicum.explore_with_me.stats;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import ru.practicum.explore_with_me.dto.Stat;
 
 import java.time.LocalDateTime;
 import java.util.Collection;

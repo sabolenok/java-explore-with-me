@@ -3,8 +3,9 @@ package ru.practicum.explore_with_me.stats;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.explore_with_me.stats.dto.StatDto;
-import ru.practicum.explore_with_me.stats.dto.StatWithCount;
+import ru.practicum.explore_with_me.dto.Stat;
+import ru.practicum.explore_with_me.dto.StatDto;
+import ru.practicum.explore_with_me.dto.StatWithCount;
 
 import java.util.List;
 

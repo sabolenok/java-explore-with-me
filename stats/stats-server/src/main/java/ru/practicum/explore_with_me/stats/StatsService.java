@@ -6,7 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.explore_with_me.stats.dto.StatWithCount;
+import ru.practicum.explore_with_me.dto.Stat;
+import ru.practicum.explore_with_me.dto.StatWithCount;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

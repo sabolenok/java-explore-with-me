@@ -1,4 +1,4 @@
-package ru.practicum.explore_with_me.stats;
+package ru.practicum.explore_with_me.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
