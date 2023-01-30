@@ -30,8 +30,8 @@ public class StatsService {
         LocalDateTime startDate = LocalDateTime.parse(start, formatter);
         LocalDateTime endDate = LocalDateTime.parse(end, formatter);
         StatWithCount statWithCount = null;
-        String previousApp = new String();
-        String previousUri = new String();
+        String previousApp = "";
+        String previousUri = "";
         Set<String> ip = new HashSet<>();
 
         if (uris.isEmpty()) {
@@ -58,6 +58,7 @@ public class StatsService {
             } else {
                 if (unique) {
                     if (!ip.contains(stat.getIp())) {
+                        ip.add(stat.getIp());
                         hits++;
                     }
                 } else {
