@@ -4,19 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import ru.practicum.explore_with_me.dto.Stat;
 import ru.practicum.explore_with_me.dto.StatWithCount;
 
+import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Arrays;
 
 @Service
@@ -36,18 +32,11 @@ public class StatsClient {
         rest.exchange(serverUrl + "/hit", HttpMethod.POST, requestEntity, Stat.class);
     }
 
-    public List<StatWithCount> getStats(String start, String end, List<String> uris, Boolean unique)
-            throws JsonProcessingException {
-        Map<String, Object> parameters = new HashMap<>();
+    public List<StatWithCount> getStats(HttpServletRequest request) throws JsonProcessingException {
+        String queryString = request.getQueryString();
+        String queryUrl = serverUrl + "/stats" + (queryString.isBlank() ? "" : "?" + queryString);
 
-        parameters.put("start", start);
-        parameters.put("end", end);
-        parameters.put("uris", uris);
-        parameters.put("unique", unique);
-
-        ResponseEntity<String> response = rest.getForEntity(
-                serverUrl + "/stats?start={start}&end={end}&uris={uris}&unique={unique}",
-                String.class, parameters);
+        ResponseEntity<String> response = rest.getForEntity(URI.create(queryUrl), String.class);
 
         ObjectMapper objectMapper = new ObjectMapper();
         StatWithCount[] array = objectMapper.readValue(response.getBody(), StatWithCount[].class);
