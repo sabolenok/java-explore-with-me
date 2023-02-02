@@ -1,4 +1,4 @@
-package ru.practicum.explore_with_me.category;
+package ru.practicum.explore_with_me.event_category;
 
 import lombok.Getter;
 import lombok.Setter;

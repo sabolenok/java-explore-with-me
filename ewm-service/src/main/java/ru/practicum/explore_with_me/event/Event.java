@@ -3,7 +3,7 @@ package ru.practicum.explore_with_me.event;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
-import ru.practicum.explore_with_me.category.Category;
+import ru.practicum.explore_with_me.event_category.Category;
 import ru.practicum.explore_with_me.user.User;
 
 import javax.persistence.*;
@@ -38,6 +38,7 @@ public class Event {
     @Column(name = "participant_limit")
     private int participantLimit;
     private int views;
+    private int confirmedRequests;
     @Column(name = "initiator_id")
     private int initiatorId;
     @Transient
