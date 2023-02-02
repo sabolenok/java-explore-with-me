@@ -21,7 +21,7 @@ services:
     depends_on:
       - ewm-db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5433/explore
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5433/ewm
 
   stats-db:
     image: postgres:13.7-alpine
@@ -41,6 +41,6 @@ services:
     ports:
       - "5433:5433"
     environment:
-      - POSTGRES_DB=explore
+      - POSTGRES_DB=ewm
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=root
