@@ -13,8 +13,8 @@ import javax.persistence.*;
 @Setter
 public class Location {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    @Column(name = "event_id")
+    private int eventId;
     private float lat;
     private float lon;
 }

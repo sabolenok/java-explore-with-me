@@ -1,5 +1,6 @@
 package ru.practicum.explore_with_me.exception;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -23,8 +24,19 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler(CategoryNotEmptyException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleCategoryNotEmptyException(final CategoryNotEmptyException e) {
+        return new ApiError(
+                e.getReason(),
+                e.getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.getReasonPhrase()
+        );
+    }
+
+    @ExceptionHandler(EventDateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleEventDateException(final EventDateException e) {
         return new ApiError(
                 e.getReason(),
                 e.getMessage(),
@@ -35,12 +47,23 @@ public class ErrorHandler {
 
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handle(final ValidationException e) {
+    public ApiError handleValidationException(final ValidationException e) {
         return new ApiError(
                 "Incorrectly made request.",
                 e.getMessage(),
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase()
+        );
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleConstraintViolationException(final ConstraintViolationException e) {
+        return new ApiError(
+                "Integrity constraint has been violated.",
+                e.getCause().getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.getReasonPhrase()
         );
     }
 }

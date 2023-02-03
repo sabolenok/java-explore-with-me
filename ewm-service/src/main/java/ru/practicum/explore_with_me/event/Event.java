@@ -50,8 +50,6 @@ public class Event {
     @Transient
     @OneToOne(fetch = FetchType.LAZY)
     private Category category;
-    @Column(name = "location_id")
-    private int locationId;
     @Transient
     @OneToOne(fetch = FetchType.LAZY)
     private Location location;
