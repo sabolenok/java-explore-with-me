@@ -38,6 +38,7 @@ public class Event {
     @Column(name = "participant_limit")
     private int participantLimit;
     private int views;
+    @Transient
     private int confirmedRequests;
     @Column(name = "initiator_id")
     private int initiatorId;

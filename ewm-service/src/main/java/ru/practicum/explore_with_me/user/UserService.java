@@ -28,7 +28,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Page<User> findAll(Integer[] ids, int from, int size) {
+    public Page<User> getAll(Integer[] ids, int from, int size) {
         if (ids != null && ids.length > 0) {
             List<Integer> id = new ArrayList<>(Arrays.asList(ids));
             return repository.findAllByIdInOrderById(id, PageRequest.of(from / size, size));
@@ -37,11 +37,12 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(Integer id) {
+    public void delete(Integer id) {
         if (repository.findById(id).isPresent()) {
             repository.deleteById(id);
         } else {
-            throw new NotFoundException(String.format("Пользователь с id %d не найден!", id));
+            throw new NotFoundException(String.format("User with id=%d was not found", id),
+                    "The required object was not found.");
         }
     }
 }

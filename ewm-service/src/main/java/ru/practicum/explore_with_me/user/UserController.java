@@ -25,14 +25,14 @@ public class UserController {
     public List<UserDto> getAll(@RequestParam(required = false) Integer[] ids,
                                 @RequestParam(required = false, defaultValue = "0") Integer from,
                                 @RequestParam(required = false, defaultValue = "100") Integer size) {
-        return userService.findAll(ids, from, size)
+        return userService.getAll(ids, from, size)
                 .stream().map(UserMapper::toUserDto).collect(Collectors.toList());
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Integer id) {
-        userService.deleteUser(id);
+    public void delete(@PathVariable Integer userId) {
+        userService.delete(userId);
     }
 
 }

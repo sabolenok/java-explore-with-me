@@ -6,7 +6,6 @@ import ru.practicum.explore_with_me.user.dto.UserDto;
 
 @Component
 public class UserMapper {
-
     private static final ModelMapper modelMapper = new ModelMapper();
 
     public static UserDto toUserDto(User user) {

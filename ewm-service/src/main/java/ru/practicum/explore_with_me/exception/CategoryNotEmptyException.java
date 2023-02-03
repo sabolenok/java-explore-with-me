@@ -7,9 +7,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.validation.ValidationException;
 
-@ResponseStatus(HttpStatus.NOT_FOUND)
+@ResponseStatus(HttpStatus.CONFLICT)
 @RequiredArgsConstructor
-public class NotFoundException extends ValidationException {
+public class CategoryNotEmptyException extends ValidationException {
+
     private final String message;
     @Getter
     private final String reason;
