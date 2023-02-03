@@ -42,9 +42,16 @@ public class Event {
     @Column(name = "initiator_id")
     private int initiatorId;
     @Transient
+    @ManyToOne(fetch = FetchType.LAZY)
     private User initiator;
     @Column(name = "category_id")
     private int categoryId;
     @Transient
+    @OneToOne(fetch = FetchType.LAZY)
     private Category category;
+    @Column(name = "location_id")
+    private int locationId;
+    @Transient
+    @OneToOne(fetch = FetchType.LAZY)
+    private Location location;
 }

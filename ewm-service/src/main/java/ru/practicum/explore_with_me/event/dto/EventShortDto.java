@@ -7,8 +7,9 @@ import ru.practicum.explore_with_me.user.User;
 import java.time.LocalDateTime;
 
 @Data
-public class EventDto {
+public class EventShortDto {
     private int id;
+    private String description;
     private String annotation;
     private int categoryId;
     private Category category;

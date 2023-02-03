@@ -26,6 +26,7 @@ public class EventRequest {
     @Column(name = "requester_id")
     private int requesterId;
     @Transient
+    @ManyToOne(fetch = FetchType.LAZY)
     private User requester;
     @Enumerated(EnumType.STRING)
     private EventRequestState status;
