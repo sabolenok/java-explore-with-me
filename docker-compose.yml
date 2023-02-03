@@ -14,14 +14,13 @@ services:
   ewm-service:
     build: ./ewm-service
     image: ewm
-    platform: linux/x86_64
     container_name: ewm
     ports:
       - "8080:8080"
     depends_on:
       - ewm-db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5433/ewm
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm
 
   stats-db:
     image: postgres:13.7-alpine
