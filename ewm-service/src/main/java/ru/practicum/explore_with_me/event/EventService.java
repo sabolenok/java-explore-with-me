@@ -11,10 +11,7 @@ import ru.practicum.explore_with_me.event.dto.EventState;
 import ru.practicum.explore_with_me.event.dto.StateAction;
 import ru.practicum.explore_with_me.event_category.Category;
 import ru.practicum.explore_with_me.event_category.CategoryRepository;
-import ru.practicum.explore_with_me.exception.EventDateException;
-import ru.practicum.explore_with_me.exception.EventStatusException;
-import ru.practicum.explore_with_me.exception.NotFoundException;
-import ru.practicum.explore_with_me.exception.UnsupportedStateException;
+import ru.practicum.explore_with_me.exception.*;
 import ru.practicum.explore_with_me.user.User;
 import ru.practicum.explore_with_me.user.UserRepository;
 
@@ -37,7 +34,7 @@ public class EventService {
 
     @Transactional
     public Event create(Event event, Integer userId) {
-        checkEventDate(event);
+        checkEventDate(event, false);
 
         event.setCreatedOn(LocalDateTime.now());
         event.setState(EventState.PENDING);
@@ -115,7 +112,7 @@ public class EventService {
     }
 
     @Transactional
-    public Event put(Event event, int userId, int id, String stateAction) {
+    public Event putByUser(Event event, int userId, int id, String stateAction) {
 
         Optional<User> foundUser = userRepository.findById(userId);
         if (foundUser.isEmpty()) {
@@ -129,48 +126,7 @@ public class EventService {
 
             checkEventState(eventPrevious);
 
-            if (event.getEventDate() != null) {
-                checkEventDate(event);
-            } else {
-                event.setEventDate(eventPrevious.getEventDate());
-            }
-
-            Optional<Category> category;
-            if (event.getCategoryId() != null) {
-                category = categoryRepository.findById(event.getCategoryId());
-            } else {
-                category = categoryRepository.findById(eventPrevious.getCategoryId());
-            }
-            if (category.isPresent()) {
-                event.setCategory(category.get());
-                event.setCategoryId(category.get().getId());
-            }
-
-            Optional<User> initiator;
-            if (event.getInitiatorId() != null) {
-                initiator = userRepository.findById(event.getInitiatorId());
-            } else {
-                initiator = userRepository.findById(eventPrevious.getInitiatorId());
-            }
-            if (initiator.isPresent()) {
-                event.setInitiator(initiator.get());
-                event.setInitiatorId(initiator.get().getId());
-            } else {
-                throw new NotFoundException(String.format("User with id=%d was not found", userId),
-                        "The required object was not found.");
-            }
-
-            event.setDescription(event.getDescription() == null ? eventPrevious.getDescription() : event.getDescription());
-            event.setAnnotation(event.getAnnotation() == null ? eventPrevious.getAnnotation() : event.getAnnotation());
-            event.setTitle(event.getTitle() == null ? eventPrevious.getTitle() : event.getTitle());
-            event.setIsPaid(event.getIsPaid() == null ? eventPrevious.getIsPaid() : event.getIsPaid());
-            event.setRequestModeration(event.getRequestModeration() == null
-                    ? eventPrevious.getRequestModeration() : event.getRequestModeration());
-            event.setParticipantLimit(event.getParticipantLimit() == null
-                    ? eventPrevious.getParticipantLimit() : event.getParticipantLimit());
-            event.setLocation(event.getLocation() == null ? eventPrevious.getLocation() : event.getLocation());
-
-            changeEventState(event, stateAction);
+            event = fillEventInformation(event, eventPrevious, stateAction, false);
 
             return repository.save(event);
 
@@ -180,8 +136,76 @@ public class EventService {
         }
     }
 
-    private void checkEventDate(Event event) {
-        if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+    @Transactional
+    public Event putByAdmin(Event event, int id, String stateAction) {
+
+        Optional<Event> foundEvent = repository.findById(id);
+        if (foundEvent.isPresent()) {
+            Event eventPrevious = foundEvent.get();
+
+            event = fillEventInformation(event, eventPrevious, stateAction, true);
+
+            return repository.save(event);
+
+        } else {
+            throw new NotFoundException(String.format("Event with id=%d was not found", id),
+                    "The required object was not found.");
+        }
+    }
+
+    private Event fillEventInformation(Event event, Event eventPrevious, String stateAction, boolean isAdmin) {
+        event.setCreatedOn(event.getCreatedOn() == null ? eventPrevious.getCreatedOn() : event.getCreatedOn());
+        if (event.getEventDate() != null) {
+            checkEventDate(event, isAdmin);
+        } else {
+            event.setEventDate(eventPrevious.getEventDate());
+        }
+
+        Optional<Category> category;
+        if (event.getCategoryId() != null) {
+            category = categoryRepository.findById(event.getCategoryId());
+        } else {
+            category = categoryRepository.findById(eventPrevious.getCategoryId());
+        }
+        if (category.isPresent()) {
+            event.setCategory(category.get());
+            event.setCategoryId(category.get().getId());
+        }
+
+        Integer userId;
+        if (event.getInitiatorId() != null) {
+            userId = event.getInitiatorId();
+        } else {
+            userId = eventPrevious.getInitiatorId();
+        }
+        Optional<User> initiator = userRepository.findById(userId);
+        if (initiator.isPresent()) {
+            event.setInitiator(initiator.get());
+            event.setInitiatorId(initiator.get().getId());
+        } else {
+            throw new NotFoundException(String.format("User with id=%d was not found", userId),
+                    "The required object was not found.");
+        }
+
+        event.setDescription(event.getDescription() == null ? eventPrevious.getDescription() : event.getDescription());
+        event.setAnnotation(event.getAnnotation() == null ? eventPrevious.getAnnotation() : event.getAnnotation());
+        event.setTitle(event.getTitle() == null ? eventPrevious.getTitle() : event.getTitle());
+        event.setIsPaid(event.getIsPaid() == null ? eventPrevious.getIsPaid() : event.getIsPaid());
+        event.setRequestModeration(event.getRequestModeration() == null
+                ? eventPrevious.getRequestModeration() : event.getRequestModeration());
+        event.setParticipantLimit(event.getParticipantLimit() == null
+                ? eventPrevious.getParticipantLimit() : event.getParticipantLimit());
+        event.setLocation(event.getLocation() == null ? eventPrevious.getLocation() : event.getLocation());
+
+        EventState currentState = event.getState() == null ? eventPrevious.getState() : event.getState();
+        changeEventState(event, stateAction, currentState);
+
+        return event;
+    }
+
+    private void checkEventDate(Event event, boolean isAdmin) {
+        LocalDateTime dateForChecking = isAdmin ? event.getCreatedOn().plusHours(1) : LocalDateTime.now().plusHours(2);
+        if (event.getEventDate().isBefore(dateForChecking)) {
             throw new EventDateException(
                     String.format("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: %s",
                             event.getEventDate().toString()),
@@ -198,7 +222,7 @@ public class EventService {
         }
     }
 
-    private void changeEventState(Event event, String stateAction) {
+    private void changeEventState(Event event, String stateAction, EventState currentState) {
         StateAction foundStateAction = getRequestedState(stateAction);
         switch (foundStateAction) {
             case SEND_TO_REVIEW:
@@ -206,6 +230,27 @@ public class EventService {
                 break;
             case CANCEL_REVIEW:
                 event.setState(EventState.CANCELED);
+                break;
+            case PUBLISH_EVENT:
+                if (currentState.equals(EventState.PENDING)) {
+                    event.setState(EventState.PUBLISHED);
+                    event.setPublishedOn(LocalDateTime.now());
+                } else {
+                    throw new EventStatusAdminException(
+                            String.format("Cannot publish the event because it's not in the right state: %s", currentState),
+                            "For the requested operation the conditions are not met."
+                    );
+                }
+                break;
+            case REJECT_EVENT:
+                if (!currentState.equals(EventState.PUBLISHED)) {
+                    event.setState(EventState.CANCELED);
+                } else {
+                    throw new EventStatusAdminException(
+                            String.format("Cannot publish the event because it's not in the right state: %s", currentState),
+                            "For the requested operation the conditions are not met."
+                    );
+                }
                 break;
             default:
                 throw new UnsupportedStateException("Unknown state: " + stateAction, "Incorrectly made request.");

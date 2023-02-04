@@ -1,10 +1,7 @@
 package ru.practicum.explore_with_me.event;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.explore_with_me.event.dto.EventFullDto;
-import ru.practicum.explore_with_me.event.dto.EventShortDto;
-import ru.practicum.explore_with_me.event.dto.NewEventDto;
-import ru.practicum.explore_with_me.event.dto.UpdateEventUserRequestDto;
+import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.user.UserMapper;
 
 @Component
@@ -58,6 +55,21 @@ public class EventMapper {
         return event;
     }
 
+    public static Event toEvent(UpdateEventAdminRequestDto eventDto) {
+        Event event = new Event();
+        event.setId(eventDto.getId());
+        event.setAnnotation(eventDto.getAnnotation());
+        event.setDescription(eventDto.getDescription());
+        event.setIsPaid(eventDto.getPaid());
+        event.setEventDate(eventDto.getEventDate());
+        event.setTitle(eventDto.getTitle());
+        event.setRequestModeration(eventDto.getRequestModeration());
+        event.setParticipantLimit(eventDto.getParticipantLimit());
+        event.setLocation(eventDto.getLocation());
+        event.setCategoryId(eventDto.getCategory());
+        return event;
+    }
+
     public static EventFullDto toEventFullDto(Event event) {
         EventFullDto newEventDto = new EventFullDto();
         newEventDto.setId(event.getId());
@@ -72,6 +84,7 @@ public class EventMapper {
         newEventDto.setInitiator(UserMapper.toUserShortDto(event.getInitiator()));
         newEventDto.setCategory(event.getCategory());
         newEventDto.setCreatedOn(event.getCreatedOn());
+        newEventDto.setPublishedOn(event.getPublishedOn());
         newEventDto.setState(event.getState());
         return newEventDto;
     }

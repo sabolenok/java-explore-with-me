@@ -29,7 +29,7 @@ public class EventPrivateController {
     @PatchMapping("/users/{userId}/events/{eventId}")
     public EventFullDto put(@PathVariable Integer userId, @PathVariable Integer eventId,
                             @RequestBody UpdateEventUserRequestDto eventDto) {
-        return EventMapper.toEventFullDto(eventService.put(EventMapper.toEvent(eventDto), userId, eventId, eventDto.getStateAction()));
+        return EventMapper.toEventFullDto(eventService.putByUser(EventMapper.toEvent(eventDto), userId, eventId, eventDto.getStateAction()));
     }
 
     @GetMapping("/users/{userId}/events/{eventId}")
