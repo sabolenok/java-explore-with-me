@@ -7,6 +7,8 @@ import ru.practicum.explore_with_me.event_category.CategoryMapper;
 import ru.practicum.explore_with_me.event_category.CategoryService;
 import ru.practicum.explore_with_me.event_category.dto.CategoryDto;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
@@ -16,12 +18,12 @@ public class CategoryAdminController {
 
     @PostMapping("/admin/categories")
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryDto add(@RequestBody CategoryDto categoryDto) {
+    public CategoryDto add(@Valid @RequestBody CategoryDto categoryDto) {
         return CategoryMapper.toCategoryDto(categoryService.create(CategoryMapper.toCategory(categoryDto)));
     }
 
     @PatchMapping("/admin/categories/{catId}")
-    public CategoryDto patch(@PathVariable Integer catId, @RequestBody CategoryDto categoryDto) {
+    public CategoryDto patch(@PathVariable Integer catId, @Valid @RequestBody CategoryDto categoryDto) {
         return CategoryMapper.toCategoryDto(categoryService.put(catId, CategoryMapper.toCategory(categoryDto)));
     }
 

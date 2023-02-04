@@ -10,6 +10,7 @@ import ru.practicum.explore_with_me.event.dto.EventShortDto;
 import ru.practicum.explore_with_me.event.dto.NewEventDto;
 import ru.practicum.explore_with_me.event.dto.UpdateEventUserRequestDto;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,7 +23,7 @@ public class EventPrivateController {
 
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.CREATED)
-    public EventFullDto add(@PathVariable Integer userId, @RequestBody NewEventDto eventDto) {
+    public EventFullDto add(@PathVariable Integer userId, @Valid @RequestBody NewEventDto eventDto) {
         return EventMapper.toEventFullDto(eventService.create(EventMapper.toEvent(eventDto), userId));
     }
 

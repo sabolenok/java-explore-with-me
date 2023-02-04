@@ -7,22 +7,6 @@ import ru.practicum.explore_with_me.user.UserMapper;
 @Component
 public class EventMapper {
 
-    public static NewEventDto toEventDto(Event event) {
-        NewEventDto newEventDto = new NewEventDto();
-        newEventDto.setId(event.getId());
-        newEventDto.setAnnotation(event.getAnnotation());
-        newEventDto.setDescription(event.getDescription());
-        newEventDto.setPaid(event.getIsPaid());
-        newEventDto.setEventDate(event.getEventDate());
-        newEventDto.setTitle(event.getTitle());
-        newEventDto.setRequestModeration(event.getRequestModeration());
-        newEventDto.setParticipantLimit(event.getParticipantLimit());
-        newEventDto.setLocation(event.getLocation());
-        newEventDto.setInitiator(event.getInitiatorId());
-        newEventDto.setCategory(event.getCategoryId());
-        return newEventDto;
-    }
-
     public static Event toEvent(NewEventDto eventDto) {
         Event event = new Event();
         event.setId(eventDto.getId());

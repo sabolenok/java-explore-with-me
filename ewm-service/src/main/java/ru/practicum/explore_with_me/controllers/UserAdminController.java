@@ -7,6 +7,7 @@ import ru.practicum.explore_with_me.user.UserMapper;
 import ru.practicum.explore_with_me.user.UserService;
 import ru.practicum.explore_with_me.user.dto.UserDto;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,7 +20,7 @@ public class UserAdminController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto add(@RequestBody UserDto userDto) {
+    public UserDto add(@Valid @RequestBody UserDto userDto) {
         return UserMapper.toUserDto(userService.create(UserMapper.toUser(userDto)));
     }
 

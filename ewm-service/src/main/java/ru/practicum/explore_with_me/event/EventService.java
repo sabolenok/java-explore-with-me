@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.event.dto.EventState;
@@ -16,8 +17,11 @@ import ru.practicum.explore_with_me.user.User;
 import ru.practicum.explore_with_me.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.springframework.data.jpa.domain.Specification.where;
 
 @Service
 @Transactional
@@ -31,6 +35,8 @@ public class EventService {
     private final UserRepository userRepository;
 
     private final CategoryRepository categoryRepository;
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Transactional
     public Event create(Event event, Integer userId) {
@@ -109,6 +115,71 @@ public class EventService {
         }
 
         return events;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Event> getAllForAdminWithFilters(Integer[] users, String[] states, Integer[] categories,
+                                                 String rangeStart, String rangeEnd, Integer from, Integer size) {
+        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, formatter);
+        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, formatter);
+        Page<Event> events =  repository.findAll(
+                where(hasInitiatorIn(users))
+                        .and(hasStatesIn(states))
+                        .and(hasCategoriesIn(categories))
+                        .and(hasStartAfter(startDate))
+                        .and(hasEndBefore(endDate)),
+                PageRequest.of(from / size, size)
+        );
+
+        Set<Integer> eventsCategories = new HashSet<>();
+        Set<Integer> eventsInitiators = new HashSet<>();
+        for (Event event : events) {
+            eventsCategories.add(event.getCategoryId());
+            eventsInitiators.add(event.getInitiatorId());
+        }
+
+        if (!eventsCategories.isEmpty()) {
+            Map<Integer, Category> foundCategories = categoryRepository.findAllById(eventsCategories)
+                    .stream().collect(Collectors.toMap(Category::getId, category -> category));
+            Map<Integer, User> foundInitiators = userRepository.findAllById(eventsInitiators)
+                    .stream().collect(Collectors.toMap(User::getId, user -> user));
+            for (Event event : events) {
+                if (foundCategories.containsKey(event.getCategoryId())) {
+                    event.setCategory(foundCategories.get(event.getCategoryId()));
+                }
+                if (foundInitiators.containsKey(event.getInitiatorId())) {
+                    event.setInitiator(foundInitiators.get(event.getInitiatorId()));
+                }
+            }
+        }
+
+        return events;
+    }
+
+    static Specification<Event> hasInitiatorIn(Integer[] userIds) {
+        return (event, query, cb) -> (userIds != null && userIds.length > 0)
+                ? event.get("initiatorId").in(userIds) : null;
+    }
+
+    static Specification<Event> hasStatesIn(String[] states) {
+        if (states == null) {
+            return null;
+        }
+        Object[] st = Arrays.stream(states).map(EventState::valueOf).toArray();
+        return (event, query, cb) -> states.length > 0 ? event.get("state").in(st) : null;
+    }
+
+    static Specification<Event> hasCategoriesIn(Integer[] categories) {
+        return (event, query, cb) -> (categories != null && categories.length > 0)
+                ? event.get("categoryId").in(categories) : null;
+    }
+
+    static Specification<Event> hasStartAfter(LocalDateTime rangeStart) {
+        return (event, query, cb) -> rangeStart == null ? null : cb.greaterThanOrEqualTo(event.get("eventDate"), rangeStart);
+    }
+
+    static Specification<Event> hasEndBefore(LocalDateTime rangeEnd) {
+        return (event, query, cb) -> rangeEnd == null ? null : cb.lessThanOrEqualTo(event.get("eventDate"), rangeEnd);
     }
 
     @Transactional
