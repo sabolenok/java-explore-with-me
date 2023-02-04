@@ -1,4 +1,4 @@
-package ru.practicum.explore_with_me.event;
+package ru.practicum.explore_with_me.event.dto;
 
 public enum EventState {
     PENDING,

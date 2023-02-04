@@ -2,19 +2,17 @@ package ru.practicum.explore_with_me.event;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 
-@Entity
-@Table(name = "locations")
-@DynamicUpdate
+@Embeddable
+@AttributeOverrides({
+        @AttributeOverride( name = "lat", column = @Column(name = "location_lat")),
+        @AttributeOverride( name = "lon", column = @Column(name = "location_lon"))
+})
 @Getter
 @Setter
 public class Location {
-    @Id
-    @Column(name = "event_id")
-    private int eventId;
     private float lat;
     private float lon;
 }

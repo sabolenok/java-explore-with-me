@@ -1,8 +1,10 @@
-package ru.practicum.explore_with_me.user;
+package ru.practicum.explore_with_me.controllers;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.explore_with_me.user.UserMapper;
+import ru.practicum.explore_with_me.user.UserService;
 import ru.practicum.explore_with_me.user.dto.UserDto;
 
 import java.util.List;
@@ -11,7 +13,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping(path = "/admin/users")
 @RequiredArgsConstructor
-public class UserController {
+public class UserAdminController {
 
     public final UserService userService;
 

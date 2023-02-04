@@ -3,6 +3,7 @@ package ru.practicum.explore_with_me.event;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
+import ru.practicum.explore_with_me.event.dto.EventState;
 import ru.practicum.explore_with_me.event_category.Category;
 import ru.practicum.explore_with_me.user.User;
 
@@ -32,25 +33,24 @@ public class Event {
     @Column(name = "published_on")
     private LocalDateTime publishedOn;
     @Column(name = "is_paid", nullable = false)
-    private boolean isPaid;
+    private Boolean isPaid;
     @Column(name = "request_moderation")
-    private boolean requestModeration;
+    private Boolean requestModeration;
     @Column(name = "participant_limit")
-    private int participantLimit;
-    private int views;
+    private Integer participantLimit;
+    private Integer views;
     @Transient
-    private int confirmedRequests;
+    private Integer confirmedRequests;
     @Column(name = "initiator_id")
-    private int initiatorId;
+    private Integer initiatorId;
     @Transient
     @ManyToOne(fetch = FetchType.LAZY)
     private User initiator;
     @Column(name = "category_id")
-    private int categoryId;
+    private Integer categoryId;
     @Transient
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Category category;
-    @Transient
-    @OneToOne(fetch = FetchType.LAZY)
+    @Embedded
     private Location location;
 }

@@ -45,6 +45,17 @@ public class ErrorHandler {
         );
     }
 
+    @ExceptionHandler(EventStatusException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleEventStatusException(final EventStatusException e) {
+        return new ApiError(
+                e.getReason(),
+                e.getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.getReasonPhrase()
+        );
+    }
+
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleValidationException(final ValidationException e) {

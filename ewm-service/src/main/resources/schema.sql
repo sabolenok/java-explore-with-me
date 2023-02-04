@@ -1,6 +1,5 @@
 DROP TABLE IF EXISTS events_compilations;
 DROP TABLE IF EXISTS requests;
-DROP TABLE IF EXISTS locations;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS categories;
@@ -29,16 +28,13 @@ CREATE TABLE IF NOT EXISTS events (
                                      is_paid BOOL NOT NULL,
                                      request_moderation BOOL,
                                      participant_limit BIGINT,
+                                     location_lat FLOAT NOT NULL,
+                                     location_lon FLOAT NOT NULL,
                                      views BIGINT,
                                      initiator_id BIGINT NOT NULL,
                                      category_id BIGINT NOT NULL,
                                      CONSTRAINT fk_events_to_users FOREIGN KEY(initiator_id) REFERENCES users(id),
                                      CONSTRAINT fk_events_to_categories FOREIGN KEY(category_id) REFERENCES categories(id)
-);
-CREATE TABLE IF NOT EXISTS locations (
-                                         lat NUMERIC(15, 13) NOT NULL,
-                                         lon NUMERIC(15, 13) NOT NULL,
-                                         event_id INTEGER NOT NULL PRIMARY KEY REFERENCES events(id)
 );
 CREATE TABLE IF NOT EXISTS requests (
                                         id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
