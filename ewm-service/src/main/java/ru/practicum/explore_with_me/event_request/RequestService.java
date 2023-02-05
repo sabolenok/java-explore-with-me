@@ -3,6 +3,8 @@ package ru.practicum.explore_with_me.event_request;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.event.Event;
@@ -101,6 +103,11 @@ public class RequestService {
                 Optional<User> foundUser = userRepository.findById(userId);
                 if (foundUser.isEmpty()) {
                     throw new NotFoundException(String.format("User with id=%d was not found", userId),
+                            "Integrity constraint has been violated.");
+                }
+
+                if (foundUser.get().getId() != userId) {
+                    throw new EventOwnerException(String.format("User with id=%d is not requester", userId),
                             "The required object was not found.");
                 }
 
@@ -117,5 +124,17 @@ public class RequestService {
                         "The required object was not found.");
             }
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EventRequest> getByUser(int userId, int from, int size) {
+
+        Optional<User> foundUser = userRepository.findById(userId);
+        if (foundUser.isEmpty()) {
+            throw new NotFoundException(String.format("User with id=%d was not found", userId),
+                    "The required object was not found.");
+        }
+
+        return repository.findAllByRequesterId(userId, PageRequest.of(from / size, size));
     }
 }
