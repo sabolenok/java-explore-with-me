@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.event_request.RequestMapper;
 import ru.practicum.explore_with_me.event_request.RequestService;
 import ru.practicum.explore_with_me.event_request.dto.EventRequestDto;
+import ru.practicum.explore_with_me.event_request.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.explore_with_me.event_request.dto.EventRequestStatusUpdateResult;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,5 +37,11 @@ public class RequestPrivateController {
                                       @RequestParam(required = false, defaultValue = "10") Integer size) {
         return requestService.getByUser(userId, from, size)
                 .stream().map(RequestMapper::toEventRequestDto).collect(Collectors.toList());
+    }
+
+    @PatchMapping("/users/{userId}/events/{eventId}/requests")
+    public EventRequestStatusUpdateResult put(@PathVariable Integer userId, @PathVariable Integer eventId,
+                                              @RequestBody EventRequestStatusUpdateRequest statusUpdateRequest) {
+        return requestService.updateRequests(userId, eventId, statusUpdateRequest);
     }
 }
