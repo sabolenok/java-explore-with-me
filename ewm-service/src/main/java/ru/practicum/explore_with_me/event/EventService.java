@@ -89,6 +89,34 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
+    public Event getPublished(int eventId) {
+
+        Optional<Event> foundEvent = repository.findById(eventId);
+        if (foundEvent.isPresent()) {
+            Event event = foundEvent.get();
+            if (!event.getState().equals(EventState.PUBLISHED)) {
+                throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
+                        "The required object was not found.");
+            }
+
+            Optional<User> foundUser = userRepository.findById(event.getInitiatorId());
+            if (foundUser.isEmpty()) {
+                throw new NotFoundException(String.format("User with id=%d was not found", event.getInitiatorId()),
+                        "The required object was not found.");
+            }
+            event.setInitiator(foundUser.get());
+
+            Optional<Category> category = categoryRepository.findById(event.getCategoryId());
+            category.ifPresent(event::setCategory);
+
+            return event;
+        } else {
+            throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
+                    "The required object was not found.");
+        }
+    }
+
+    @Transactional(readOnly = true)
     public Page<Event> getAll(int userId, int from, int size) {
 
         Optional<User> foundUser = userRepository.findById(userId);
