@@ -5,9 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.explore_with_me.event.dto.EventSort;
 import ru.practicum.explore_with_me.event.dto.EventState;
 import ru.practicum.explore_with_me.event.dto.StateAction;
 import ru.practicum.explore_with_me.event_category.Category;
@@ -184,6 +186,59 @@ public class EventService {
         return events;
     }
 
+    @Transactional(readOnly = true)
+    public Page<Event> getAllForPublicWithFilters(String text, Integer[] categories, Boolean paid,
+                                                  String rangeStart, String rangeEnd, Boolean onlyAvailable, EventSort sort,
+                                                 Integer from, Integer size) {
+        String sortProperty;
+        switch (sort) {
+            case VIEWS:
+                sortProperty = "views";
+                break;
+            case EVENT_DATE:
+                sortProperty = "eventDate";
+                break;
+            default:
+                sortProperty = "";
+        }
+        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, formatter);
+        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, formatter);
+
+        Page<Event> events =  repository.findAll(
+                where(hasAnnotationEqualText(text))
+                        .and(hasCategoriesIn(categories))
+                        .and(isPaid(paid))
+                        .and(hasStartAfterNow(startDate))
+                        .and(hasEndBefore(endDate))
+                        .and(hasAvailable(onlyAvailable)),
+                PageRequest.of(from / size, size, Sort.by(sortProperty))
+        );
+
+        Set<Integer> eventsCategories = new HashSet<>();
+        Set<Integer> eventsInitiators = new HashSet<>();
+        for (Event event : events) {
+            eventsCategories.add(event.getCategoryId());
+            eventsInitiators.add(event.getInitiatorId());
+        }
+
+        if (!eventsCategories.isEmpty()) {
+            Map<Integer, Category> foundCategories = categoryRepository.findAllById(eventsCategories)
+                    .stream().collect(Collectors.toMap(Category::getId, category -> category));
+            Map<Integer, User> foundInitiators = userRepository.findAllById(eventsInitiators)
+                    .stream().collect(Collectors.toMap(User::getId, user -> user));
+            for (Event event : events) {
+                if (foundCategories.containsKey(event.getCategoryId())) {
+                    event.setCategory(foundCategories.get(event.getCategoryId()));
+                }
+                if (foundInitiators.containsKey(event.getInitiatorId())) {
+                    event.setInitiator(foundInitiators.get(event.getInitiatorId()));
+                }
+            }
+        }
+
+        return events;
+    }
+
     static Specification<Event> hasInitiatorIn(Integer[] userIds) {
         return (event, query, cb) -> (userIds != null && userIds.length > 0)
                 ? event.get("initiatorId").in(userIds) : null;
@@ -208,6 +263,29 @@ public class EventService {
 
     static Specification<Event> hasEndBefore(LocalDateTime rangeEnd) {
         return (event, query, cb) -> rangeEnd == null ? null : cb.lessThanOrEqualTo(event.get("eventDate"), rangeEnd);
+    }
+
+    static Specification<Event> hasStartAfterNow(LocalDateTime rangeStart) {
+        return (event, query, cb) -> rangeStart == null
+                ? cb.greaterThanOrEqualTo(event.get("eventDate"), LocalDateTime.now())
+                : cb.greaterThanOrEqualTo(event.get("eventDate"), rangeStart);
+    }
+
+    static Specification<Event> hasAnnotationEqualText(String text) {
+        return (event, query, cb) -> (text == null || text.isBlank())
+                ? null
+                : cb.or(cb.like(cb.lower(event.get("annotation")), "%" + text.toLowerCase() + "%"),
+                cb.like(cb.lower(event.get("description")), "%" + text.toLowerCase() + "%"));
+    }
+
+    static Specification<Event> isPaid(Boolean paid) {
+        return (event, query, cb) -> paid == null ? null : cb.equal(event.get("isPaid"), paid);
+    }
+
+    static Specification<Event> hasAvailable(Boolean onlyAvailable) {
+        return (event, query, cb) -> (onlyAvailable == null || !onlyAvailable)
+                ? null
+                : cb.greaterThan(event.get("participantLimit"), event.get("confirmedRequests"));
     }
 
     @Transactional
