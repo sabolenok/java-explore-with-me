@@ -73,10 +73,49 @@ public class RequestService {
             request.setCreated(LocalDateTime.now());
             request.setStatus(event.getRequestModeration() ? EventRequestState.PENDING : EventRequestState.PUBLISHED);
 
+            if (request.getStatus().equals(EventRequestState.PUBLISHED)) {
+                event.setConfirmedRequests(event.getConfirmedRequests()+1);
+                eventRepository.save(event);
+            }
+
             return repository.save(request);
         } else {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
                     "The required object was not found.");
+        }
+    }
+
+    @Transactional
+    public EventRequest cancel(Integer userId, Integer requestId) {
+
+        Optional<EventRequest> foundRequest = repository.findById(requestId);
+        if (foundRequest.isEmpty()) {
+            throw new NotFoundException(String.format("Request with id=%d was not found", requestId),
+                    "The required object was not found.");
+        } else {
+            EventRequest request = foundRequest.get();
+
+            Optional<Event> foundEvent = eventRepository.findById(request.getEventId());
+            if (foundEvent.isPresent()) {
+                Event event = foundEvent.get();
+                Optional<User> foundUser = userRepository.findById(userId);
+                if (foundUser.isEmpty()) {
+                    throw new NotFoundException(String.format("User with id=%d was not found", userId),
+                            "The required object was not found.");
+                }
+
+                if (request.getStatus().equals(EventRequestState.PUBLISHED)) {
+                    event.setConfirmedRequests(event.getConfirmedRequests()-1);
+                    eventRepository.save(event);
+                }
+
+                request.setStatus(EventRequestState.CANCELED);
+
+                return repository.save(request);
+            } else {
+                throw new NotFoundException(String.format("Event with id=%d was not found", request.getEventId()),
+                        "The required object was not found.");
+            }
         }
     }
 }

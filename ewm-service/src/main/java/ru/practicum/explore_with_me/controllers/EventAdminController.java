@@ -30,7 +30,7 @@ public class EventAdminController {
                                   @RequestParam(required = false) String rangeStart,
                                   @RequestParam(required = false) String rangeEnd,
                                   @RequestParam(required = false, defaultValue = "0") Integer from,
-                                  @RequestParam(required = false, defaultValue = "100") Integer size) {
+                                  @RequestParam(required = false, defaultValue = "10") Integer size) {
         return eventService.getAllForAdminWithFilters(users, states, categories, rangeStart, rangeEnd, from, size)
                 .stream().map(EventMapper::toEventFullDto).collect(Collectors.toList());
     }

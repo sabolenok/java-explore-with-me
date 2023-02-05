@@ -20,4 +20,9 @@ public class RequestPrivateController {
     public EventRequestDto add(@PathVariable Integer userId, @RequestParam Integer eventId) {
         return RequestMapper.toEventRequestDto(requestService.create(userId, eventId));
     }
+
+    @PatchMapping("/users/{userId}/requests/{requestId}/cancel")
+    public EventRequestDto cancel(@PathVariable Integer userId, @PathVariable Integer requestId) {
+        return RequestMapper.toEventRequestDto(requestService.cancel(userId, requestId));
+    }
 }

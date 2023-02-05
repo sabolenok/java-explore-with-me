@@ -31,7 +31,7 @@ public class EventPublicController {
                                        @RequestParam(required = false) Boolean onlyAvailable,
                                        @RequestParam(required = false) String sort,
                                        @RequestParam(required = false, defaultValue = "0") Integer from,
-                                       @RequestParam(required = false, defaultValue = "100") Integer size) {
+                                       @RequestParam(required = false, defaultValue = "10") Integer size) {
         return eventService
                 .getAllForPublicWithFilters(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size)
                 .stream().map(EventMapper::toEventShortDto).collect(Collectors.toList());

@@ -41,7 +41,7 @@ public class EventPrivateController {
     @GetMapping("/users/{userId}/events")
     public List<EventShortDto> getAll(@PathVariable Integer userId,
                                       @RequestParam(required = false, defaultValue = "0") Integer from,
-                                      @RequestParam(required = false, defaultValue = "100") Integer size) {
+                                      @RequestParam(required = false, defaultValue = "10") Integer size) {
         return eventService.getAll(userId, from, size)
                 .stream().map(EventMapper::toEventShortDto).collect(Collectors.toList());
     }
