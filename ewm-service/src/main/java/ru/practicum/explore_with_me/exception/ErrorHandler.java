@@ -67,6 +67,28 @@ public class ErrorHandler {
         );
     }
 
+    @ExceptionHandler(EventOwnerException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleEventOwnerException(final EventOwnerException e) {
+        return new ApiError(
+                e.getReason(),
+                e.getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.getReasonPhrase()
+        );
+    }
+    @ExceptionHandler(DoubleEventRequestException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleDoubleEventRequestException(final DoubleEventRequestException e) {
+        return new ApiError(
+                e.getReason(),
+                e.getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.getReasonPhrase()
+        );
+    }
+
+
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleValidationException(final ValidationException e) {

@@ -188,21 +188,21 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public Page<Event> getAllForPublicWithFilters(String text, Integer[] categories, Boolean paid,
-                                                  String rangeStart, String rangeEnd, Boolean onlyAvailable, EventSort sort,
+                                                  String rangeStart, String rangeEnd, Boolean onlyAvailable, String sort,
                                                  Integer from, Integer size) {
-        String sortProperty;
-        switch (sort) {
-            case VIEWS:
-                sortProperty = "views";
-                break;
-            case EVENT_DATE:
-                sortProperty = "eventDate";
-                break;
-            default:
-                sortProperty = "";
+        String sortProperty = "eventDate";
+        EventSort eventSort = null;
+        if (sort != null && !sort.isBlank()) {
+            try {
+                eventSort = EventSort.valueOf(sort);
+            } catch(IllegalArgumentException ignored) {
+            }
+            sortProperty = EventSort.VIEWS.equals(eventSort) ? "views" : "eventDate";
         }
         LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, formatter);
         LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, formatter);
+
+        String[] states = { EventState.PENDING.toString() };
 
         Page<Event> events =  repository.findAll(
                 where(hasAnnotationEqualText(text))
@@ -210,7 +210,8 @@ public class EventService {
                         .and(isPaid(paid))
                         .and(hasStartAfterNow(startDate))
                         .and(hasEndBefore(endDate))
-                        .and(hasAvailable(onlyAvailable)),
+                        .and(hasAvailable(onlyAvailable))
+                        .and(hasStatesIn(states)),
                 PageRequest.of(from / size, size, Sort.by(sortProperty))
         );
 
@@ -303,7 +304,7 @@ public class EventService {
 
             checkEventState(eventPrevious);
 
-            event = fillEventInformation(event, eventPrevious, stateAction, false);
+            fillEventInformation(event, eventPrevious, stateAction, false);
 
             return repository.save(event);
 
@@ -320,7 +321,7 @@ public class EventService {
         if (foundEvent.isPresent()) {
             Event eventPrevious = foundEvent.get();
 
-            event = fillEventInformation(event, eventPrevious, stateAction, true);
+            fillEventInformation(event, eventPrevious, stateAction, true);
 
             return repository.save(event);
 

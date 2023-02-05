@@ -6,7 +6,6 @@ import ru.practicum.explore_with_me.event.EventMapper;
 import ru.practicum.explore_with_me.event.EventService;
 import ru.practicum.explore_with_me.event.dto.EventFullDto;
 import ru.practicum.explore_with_me.event.dto.EventShortDto;
-import ru.practicum.explore_with_me.event.dto.EventSort;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,7 +29,7 @@ public class EventPublicController {
                                        @RequestParam(required = false) String rangeStart,
                                        @RequestParam(required = false) String rangeEnd,
                                        @RequestParam(required = false) Boolean onlyAvailable,
-                                       @RequestParam(required = false) EventSort sort,
+                                       @RequestParam(required = false) String sort,
                                        @RequestParam(required = false, defaultValue = "0") Integer from,
                                        @RequestParam(required = false, defaultValue = "100") Integer size) {
         return eventService
