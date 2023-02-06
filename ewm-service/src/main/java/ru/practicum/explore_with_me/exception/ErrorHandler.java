@@ -112,14 +112,14 @@ public class ErrorHandler {
         );
     }
 
-    /*@ExceptionHandler(DataIntegrityViolationException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleDataIntegrityViolationException(final DataIntegrityViolationException e) {
+    @ExceptionHandler(IncorrectCompilationBodyException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleIncorrectCompilationBodyException(final IncorrectCompilationBodyException e) {
         return new ApiError(
-                "Integrity constraint has been violated.",
-                e.getCause().getMessage(),
+                "Incorrectly made request.",
+                e.getMessage(),
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.getReasonPhrase()
         );
-    }*/
+    }
 }

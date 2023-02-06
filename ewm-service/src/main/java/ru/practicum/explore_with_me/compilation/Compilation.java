@@ -3,7 +3,7 @@ package ru.practicum.explore_with_me.compilation;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
-import ru.practicum.explore_with_me.event.dto.EventFullDto;
+import ru.practicum.explore_with_me.event.dto.EventShortDto;
 
 import javax.persistence.*;
 import java.util.List;
@@ -22,5 +22,5 @@ public class Compilation {
     @Column(nullable = false)
     private String title;
     @Transient
-    List<EventFullDto> events;
+    List<EventShortDto> events;
 }

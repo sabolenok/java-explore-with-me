@@ -134,14 +134,14 @@ public class EventService {
         }
 
         Page<Event> events = repository.findByInitiatorId(userId, PageRequest.of(from / size, size));
-        Set<Integer> EventsCategories = new HashSet<>();
+        Set<Integer> eventsCategories = new HashSet<>();
         for (Event event : events) {
             event.setInitiator(foundUser.get());
-            EventsCategories.add(event.getCategoryId());
+            eventsCategories.add(event.getCategoryId());
         }
 
-        if (!EventsCategories.isEmpty()) {
-            Map<Integer, Category> categories = categoryRepository.findAllById(EventsCategories)
+        if (!eventsCategories.isEmpty()) {
+            Map<Integer, Category> categories = categoryRepository.findAllById(eventsCategories)
                     .stream().collect(Collectors.toMap(Category::getId, category -> category));
             for (Event event : events) {
                 if (categories.containsKey(event.getCategoryId())) {
