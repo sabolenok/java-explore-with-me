@@ -7,6 +7,7 @@ import ru.practicum.explore_with_me.event.dto.EventShortDto;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "compilations")
@@ -23,4 +24,8 @@ public class Compilation {
     private String title;
     @Transient
     List<EventShortDto> events;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "events_compilations", joinColumns = @JoinColumn(name = "compilation_id"))
+    @Column(name = "event_id")
+    private Set<Integer> eventsIds;
 }

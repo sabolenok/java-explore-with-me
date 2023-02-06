@@ -19,4 +19,15 @@ public class CompilationAdminController {
     public Compilation add(@RequestBody NewCompilationDto newCompilationDto) {
         return compilationService.create(newCompilationDto);
     }
+
+    @PatchMapping("/admin/compilations/{compId}")
+    public Compilation put(@PathVariable Integer compId, @RequestBody NewCompilationDto compilationDto) {
+        return compilationService.update(compId, compilationDto);
+    }
+
+    @DeleteMapping("/admin/compilations/{compId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer compId) {
+        compilationService.delete(compId);
+    }
 }
