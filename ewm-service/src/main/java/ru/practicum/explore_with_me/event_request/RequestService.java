@@ -107,7 +107,7 @@ public class RequestService {
                             "Integrity constraint has been violated.");
                 }
 
-                if (!foundEvent.get().getInitiatorId().equals(userId)) {
+                if (request.getRequesterId() != userId) {
                     throw new EventOwnerException(String.format("User with id=%d is not requester", userId),
                             "The required object was not found.");
                 }
