@@ -60,7 +60,7 @@ public class RequestService {
                         "Integrity constraint has been violated.");
             }
 
-            int confirmedRequests = event.getConfirmedRequests() == null ? 0 : event.getConfirmedRequests();
+            int confirmedRequests = repository.findByEventIdAndStatus(eventId, EventRequestState.CONFIRMED).size();
             int participantLimit = event.getParticipantLimit() == null ? 0 : event.getParticipantLimit();
             if (confirmedRequests >= participantLimit) {
                 throw new EventStatusException(String.format("Event %s request limit exceeded.", eventId),
@@ -82,11 +82,6 @@ public class RequestService {
             request.setCreated(LocalDateTime.now());
             request.setStatus(event.getRequestModeration() ? EventRequestState.PENDING : EventRequestState.CONFIRMED);
 
-            if (request.getStatus().equals(EventRequestState.CONFIRMED)) {
-                event.setConfirmedRequests(confirmedRequests+1);
-                eventRepository.save(event);
-            }
-
             return repository.save(request);
         } else {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
@@ -106,21 +101,15 @@ public class RequestService {
 
             Optional<Event> foundEvent = eventRepository.findById(request.getEventId());
             if (foundEvent.isPresent()) {
-                Event event = foundEvent.get();
                 Optional<User> foundUser = userRepository.findById(userId);
                 if (foundUser.isEmpty()) {
                     throw new NotFoundException(String.format("User with id=%d was not found", userId),
                             "Integrity constraint has been violated.");
                 }
 
-                if (foundUser.get().getId() != userId) {
+                if (!foundEvent.get().getInitiatorId().equals(userId)) {
                     throw new EventOwnerException(String.format("User with id=%d is not requester", userId),
                             "The required object was not found.");
-                }
-
-                if (request.getStatus().equals(EventRequestState.CONFIRMED)) {
-                    event.setConfirmedRequests(event.getConfirmedRequests()-1);
-                    eventRepository.save(event);
                 }
 
                 request.setStatus(EventRequestState.CANCELED);
@@ -143,6 +132,29 @@ public class RequestService {
         }
 
         return repository.findAllByRequesterId(userId, PageRequest.of(from / size, size));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EventRequest> getByUserAndEvent(int userId, int eventId, int from, int size) {
+
+        Optional<User> foundUser = userRepository.findById(userId);
+        if (foundUser.isEmpty()) {
+            throw new NotFoundException(String.format("User with id=%d was not found", userId),
+                    "The required object was not found.");
+        }
+
+        Optional<Event> foundEvent = eventRepository.findById(eventId);
+        if (foundEvent.isEmpty()) {
+            throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
+                    "The required object was not found.");
+        }
+
+        if (!foundEvent.get().getInitiatorId().equals(userId)) {
+            throw new EventOwnerException(String.format("User %s is owner for event %s.", userId, eventId),
+                    "Integrity constraint has been violated.");
+        }
+
+        return repository.findAllByEventId(eventId, PageRequest.of(from / size, size));
     }
 
     @Transactional
@@ -168,7 +180,7 @@ public class RequestService {
                         "Integrity constraint has been violated.");
             }
 
-            int confirmedRequests = event.getConfirmedRequests() == null ? 0 : event.getConfirmedRequests();
+            int confirmedRequests = repository.findByEventIdAndStatus(eventId, EventRequestState.CONFIRMED).size();
             int participantLimit = event.getParticipantLimit() == null ? 0 : event.getParticipantLimit();
             if (confirmedRequests >= participantLimit) {
                 throw new EventStatusException("The participant limit has been reached",
@@ -194,8 +206,6 @@ public class RequestService {
                 }
             }
             repository.saveAll(requests);
-            event.setConfirmedRequests(confirmedRequests);
-            eventRepository.save(event);
 
             List<EventRequestDto> confirmed = requests.stream()
                     .filter(x -> x.getStatus().equals(EventRequestState.CONFIRMED))

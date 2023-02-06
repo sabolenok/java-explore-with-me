@@ -44,4 +44,12 @@ public class RequestPrivateController {
                                               @RequestBody EventRequestStatusUpdateRequest statusUpdateRequest) {
         return requestService.updateRequests(userId, eventId, statusUpdateRequest);
     }
+
+    @GetMapping("/users/{userId}/events/{eventId}/requests")
+    public List<EventRequestDto> getByUserAndEvent(@PathVariable Integer userId, @PathVariable Integer eventId,
+                                                   @RequestParam(required = false, defaultValue = "0") Integer from,
+                                                   @RequestParam(required = false, defaultValue = "10") Integer size) {
+        return requestService.getByUserAndEvent(userId, eventId, from, size)
+                .stream().map(RequestMapper::toEventRequestDto).collect(Collectors.toList());
+    }
 }

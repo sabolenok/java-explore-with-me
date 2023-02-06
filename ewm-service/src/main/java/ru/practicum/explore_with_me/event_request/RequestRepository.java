@@ -14,5 +14,11 @@ public interface RequestRepository extends JpaRepository<EventRequest, Integer> 
 
     Page<EventRequest> findAllByRequesterId(int requesterId, Pageable pageable);
 
+    Page<EventRequest> findAllByEventId(int eventId, Pageable pageable);
+
     List<EventRequest> findByEventIdAndIdInOrderById(int eventId, Collection<Integer> id);
+
+    List<EventRequest> findByEventIdAndStatus(int eventId, EventRequestState status);
+
+    List<EventRequest> findByEventIdInAndStatus(Collection<Integer> eventId, EventRequestState status);
 }

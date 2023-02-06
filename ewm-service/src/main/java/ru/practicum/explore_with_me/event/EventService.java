@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -14,6 +15,9 @@ import ru.practicum.explore_with_me.event.dto.EventState;
 import ru.practicum.explore_with_me.event.dto.StateAction;
 import ru.practicum.explore_with_me.event_category.Category;
 import ru.practicum.explore_with_me.event_category.CategoryRepository;
+import ru.practicum.explore_with_me.event_request.EventRequest;
+import ru.practicum.explore_with_me.event_request.EventRequestState;
+import ru.practicum.explore_with_me.event_request.RequestRepository;
 import ru.practicum.explore_with_me.exception.*;
 import ru.practicum.explore_with_me.user.User;
 import ru.practicum.explore_with_me.user.UserRepository;
@@ -37,6 +41,8 @@ public class EventService {
     private final UserRepository userRepository;
 
     private final CategoryRepository categoryRepository;
+
+    private final RequestRepository requestRepository;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -215,9 +221,10 @@ public class EventService {
                 PageRequest.of(from / size, size, Sort.by(sortProperty))
         );
 
+        List<Event> foundEvents = events.getContent();
         Set<Integer> eventsCategories = new HashSet<>();
         Set<Integer> eventsInitiators = new HashSet<>();
-        for (Event event : events) {
+        for (Event event : foundEvents) {
             eventsCategories.add(event.getCategoryId());
             eventsInitiators.add(event.getInitiatorId());
         }
@@ -227,17 +234,27 @@ public class EventService {
                     .stream().collect(Collectors.toMap(Category::getId, category -> category));
             Map<Integer, User> foundInitiators = userRepository.findAllById(eventsInitiators)
                     .stream().collect(Collectors.toMap(User::getId, user -> user));
-            for (Event event : events) {
+            List<EventRequest> requests = requestRepository.findByEventIdInAndStatus(
+                    foundEvents.stream().map(Event::getId).collect(Collectors.toList()),
+                    EventRequestState.CONFIRMED
+            );
+            for (Event event : foundEvents) {
                 if (foundCategories.containsKey(event.getCategoryId())) {
                     event.setCategory(foundCategories.get(event.getCategoryId()));
                 }
                 if (foundInitiators.containsKey(event.getInitiatorId())) {
                     event.setInitiator(foundInitiators.get(event.getInitiatorId()));
                 }
+                if (onlyAvailable != null && onlyAvailable) {
+                    long confirmedRequests = requests.stream().filter(r -> r.getEventId() == event.getId()).count();
+                    if (event.getParticipantLimit() < confirmedRequests) {
+                        foundEvents.remove(event);
+                    }
+                }
             }
         }
 
-        return events;
+        return new PageImpl<>(foundEvents, PageRequest.of(from, size), foundEvents.size());
     }
 
     static Specification<Event> hasInitiatorIn(Integer[] userIds) {
@@ -364,6 +381,10 @@ public class EventService {
             throw new NotFoundException(String.format("User with id=%d was not found", userId),
                     "The required object was not found.");
         }
+
+        int confirmedRequests = requestRepository.findByEventIdAndStatus(event.getId(), EventRequestState.CONFIRMED)
+                .size();
+        event.setConfirmedRequests(confirmedRequests);
 
         event.setDescription(event.getDescription() == null ? eventPrevious.getDescription() : event.getDescription());
         event.setAnnotation(event.getAnnotation() == null ? eventPrevious.getAnnotation() : event.getAnnotation());

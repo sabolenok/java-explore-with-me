@@ -1,5 +1,6 @@
 package ru.practicum.explore_with_me.exception;
 
+
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -105,9 +106,20 @@ public class ErrorHandler {
     public ApiError handleConstraintViolationException(final ConstraintViolationException e) {
         return new ApiError(
                 "Integrity constraint has been violated.",
-                e.getCause().getMessage(),
+                e.getSQLException().getMessage(),
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.getReasonPhrase()
         );
     }
+
+    /*@ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleDataIntegrityViolationException(final DataIntegrityViolationException e) {
+        return new ApiError(
+                "Integrity constraint has been violated.",
+                e.getCause().getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.getReasonPhrase()
+        );
+    }*/
 }
