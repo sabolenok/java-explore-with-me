@@ -84,12 +84,7 @@ public class EventService {
                  throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
                             "The required object was not found.");
             }
-            event.setInitiator(foundUser.get());
-
-            Optional<Category> category = categoryRepository.findById(event.getCategoryId());
-            category.ifPresent(event::setCategory);
-
-            return event;
+            return fillInformation(List.of(event), null).get(0);
         } else {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
                     "The required object was not found.");
@@ -112,12 +107,7 @@ public class EventService {
                 throw new NotFoundException(String.format("User with id=%d was not found", event.getInitiatorId()),
                         "The required object was not found.");
             }
-            event.setInitiator(foundUser.get());
-
-            Optional<Category> category = categoryRepository.findById(event.getCategoryId());
-            category.ifPresent(event::setCategory);
-
-            return event;
+            return fillInformation(List.of(event), null).get(0);
         } else {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
                     "The required object was not found.");
@@ -320,7 +310,7 @@ public class EventService {
         }
     }
 
-    private Event fillInformationInUpdatedEvent(Event event, Event eventPrevious, String stateAction, boolean isAdmin) {
+    private void fillInformationInUpdatedEvent(Event event, Event eventPrevious, String stateAction, boolean isAdmin) {
         event.setCreatedOn(event.getCreatedOn() == null ? eventPrevious.getCreatedOn() : event.getCreatedOn());
         if (event.getEventDate() != null) {
             checkEventDate(event, isAdmin);
@@ -371,7 +361,6 @@ public class EventService {
         EventState currentState = event.getState() == null ? eventPrevious.getState() : event.getState();
         changeEventState(event, stateAction, currentState);
 
-        return event;
     }
 
     private void checkEventDate(Event event, boolean isAdmin) {
