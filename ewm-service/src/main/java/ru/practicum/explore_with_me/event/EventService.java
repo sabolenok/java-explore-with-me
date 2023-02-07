@@ -172,7 +172,7 @@ public class EventService {
         if (sort != null && !sort.isBlank()) {
             try {
                 eventSort = EventSort.valueOf(sort);
-            } catch(IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException ignored) {
             }
             sortProperty = EventSort.VIEWS.equals(eventSort) ? "views" : "eventDate";
         }

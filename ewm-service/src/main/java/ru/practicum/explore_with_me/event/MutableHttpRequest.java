@@ -56,7 +56,7 @@ public class MutableHttpRequest extends HttpServletRequestWrapper {
                     .append(URLEncoder.encode(getParameter(param), StandardCharsets.UTF_8).replaceAll("\\+", "%20")).append("&");
         }
         if (builder.length() > 0) {
-            builder.deleteCharAt(builder.length()-1);
+            builder.deleteCharAt(builder.length() - 1);
         }
         return builder.toString();
     }

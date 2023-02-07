@@ -7,8 +7,8 @@ import javax.persistence.*;
 
 @Embeddable
 @AttributeOverrides({
-        @AttributeOverride( name = "lat", column = @Column(name = "location_lat")),
-        @AttributeOverride( name = "lon", column = @Column(name = "location_lon"))
+        @AttributeOverride(name = "lat", column = @Column(name = "location_lat")),
+        @AttributeOverride(name = "lon", column = @Column(name = "location_lon"))
 })
 @Getter
 @Setter

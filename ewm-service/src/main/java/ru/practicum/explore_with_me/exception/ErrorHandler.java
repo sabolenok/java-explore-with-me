@@ -78,6 +78,7 @@ public class ErrorHandler {
                 HttpStatus.CONFLICT.getReasonPhrase()
         );
     }
+
     @ExceptionHandler(DoubleEventRequestException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleDoubleEventRequestException(final DoubleEventRequestException e) {
