@@ -134,23 +134,10 @@ public class EventService {
         }
 
         Page<Event> events = repository.findByInitiatorId(userId, PageRequest.of(from / size, size));
-        Set<Integer> eventsCategories = new HashSet<>();
-        for (Event event : events) {
-            event.setInitiator(foundUser.get());
-            eventsCategories.add(event.getCategoryId());
-        }
 
-        if (!eventsCategories.isEmpty()) {
-            Map<Integer, Category> categories = categoryRepository.findAllById(eventsCategories)
-                    .stream().collect(Collectors.toMap(Category::getId, category -> category));
-            for (Event event : events) {
-                if (categories.containsKey(event.getCategoryId())) {
-                    event.setCategory(categories.get(event.getCategoryId()));
-                }
-            }
-        }
+        List<Event> foundEvents = fillInformation(events.getContent(), null);
 
-        return events;
+        return new PageImpl<>(foundEvents, PageRequest.of(from, size), foundEvents.size());
     }
 
     @Transactional(readOnly = true)
@@ -167,29 +154,9 @@ public class EventService {
                 PageRequest.of(from / size, size)
         );
 
-        Set<Integer> eventsCategories = new HashSet<>();
-        Set<Integer> eventsInitiators = new HashSet<>();
-        for (Event event : events) {
-            eventsCategories.add(event.getCategoryId());
-            eventsInitiators.add(event.getInitiatorId());
-        }
+        List<Event> foundEvents = fillInformation(events.getContent(), null);
 
-        if (!eventsCategories.isEmpty()) {
-            Map<Integer, Category> foundCategories = categoryRepository.findAllById(eventsCategories)
-                    .stream().collect(Collectors.toMap(Category::getId, category -> category));
-            Map<Integer, User> foundInitiators = userRepository.findAllById(eventsInitiators)
-                    .stream().collect(Collectors.toMap(User::getId, user -> user));
-            for (Event event : events) {
-                if (foundCategories.containsKey(event.getCategoryId())) {
-                    event.setCategory(foundCategories.get(event.getCategoryId()));
-                }
-                if (foundInitiators.containsKey(event.getInitiatorId())) {
-                    event.setInitiator(foundInitiators.get(event.getInitiatorId()));
-                }
-            }
-        }
-
-        return events;
+        return new PageImpl<>(foundEvents, PageRequest.of(from, size), foundEvents.size());
     }
 
     @Transactional(readOnly = true)
@@ -221,10 +188,15 @@ public class EventService {
                 PageRequest.of(from / size, size, Sort.by(sortProperty))
         );
 
-        List<Event> foundEvents = events.getContent();
+        List<Event> foundEvents = fillInformation(events.getContent(), onlyAvailable);
+
+        return new PageImpl<>(foundEvents, PageRequest.of(from, size), foundEvents.size());
+    }
+
+    public List<Event> fillInformation(List<Event> events, Boolean onlyAvailable) {
         Set<Integer> eventsCategories = new HashSet<>();
         Set<Integer> eventsInitiators = new HashSet<>();
-        for (Event event : foundEvents) {
+        for (Event event : events) {
             eventsCategories.add(event.getCategoryId());
             eventsInitiators.add(event.getInitiatorId());
         }
@@ -235,26 +207,26 @@ public class EventService {
             Map<Integer, User> foundInitiators = userRepository.findAllById(eventsInitiators)
                     .stream().collect(Collectors.toMap(User::getId, user -> user));
             List<EventRequest> requests = requestRepository.findByEventIdInAndStatus(
-                    foundEvents.stream().map(Event::getId).collect(Collectors.toList()),
+                    events.stream().map(Event::getId).collect(Collectors.toList()),
                     EventRequestState.CONFIRMED
             );
-            for (Event event : foundEvents) {
+            for (Event event : events) {
                 if (foundCategories.containsKey(event.getCategoryId())) {
                     event.setCategory(foundCategories.get(event.getCategoryId()));
                 }
                 if (foundInitiators.containsKey(event.getInitiatorId())) {
                     event.setInitiator(foundInitiators.get(event.getInitiatorId()));
                 }
+                long confirmedRequests = requests.stream().filter(r -> r.getEventId() == event.getId()).count();
+                event.setConfirmedRequests((int) confirmedRequests);
                 if (onlyAvailable != null && onlyAvailable) {
-                    long confirmedRequests = requests.stream().filter(r -> r.getEventId() == event.getId()).count();
                     if (event.getParticipantLimit() < confirmedRequests) {
-                        foundEvents.remove(event);
+                        events.remove(event);
                     }
                 }
             }
         }
-
-        return new PageImpl<>(foundEvents, PageRequest.of(from, size), foundEvents.size());
+        return events;
     }
 
     static Specification<Event> hasInitiatorIn(Integer[] userIds) {
@@ -321,7 +293,7 @@ public class EventService {
 
             checkEventState(eventPrevious);
 
-            fillEventInformation(event, eventPrevious, stateAction, false);
+            fillInformationInUpdatedEvent(event, eventPrevious, stateAction, false);
 
             return repository.save(event);
 
@@ -338,7 +310,7 @@ public class EventService {
         if (foundEvent.isPresent()) {
             Event eventPrevious = foundEvent.get();
 
-            fillEventInformation(event, eventPrevious, stateAction, true);
+            fillInformationInUpdatedEvent(event, eventPrevious, stateAction, true);
 
             return repository.save(event);
 
@@ -348,7 +320,7 @@ public class EventService {
         }
     }
 
-    private Event fillEventInformation(Event event, Event eventPrevious, String stateAction, boolean isAdmin) {
+    private Event fillInformationInUpdatedEvent(Event event, Event eventPrevious, String stateAction, boolean isAdmin) {
         event.setCreatedOn(event.getCreatedOn() == null ? eventPrevious.getCreatedOn() : event.getCreatedOn());
         if (event.getEventDate() != null) {
             checkEventDate(event, isAdmin);
