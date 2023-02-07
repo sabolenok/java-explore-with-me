@@ -37,7 +37,7 @@ public class StatsService {
 
         List<Stat> foundStats;
 
-        if (uris.isEmpty()) {
+        if (uris == null || uris.isEmpty()) {
             foundStats = repository.findByTimestampBetweenOrderByAppAscUriAsc(startDate, endDate);
         } else {
             foundStats = repository.findByTimestampBetweenAndUriInOrderByAppAscUriAsc(startDate, endDate, uris);

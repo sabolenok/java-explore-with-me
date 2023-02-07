@@ -1,5 +1,6 @@
 package ru.practicum.explore_with_me.event;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.explore_with_me.client.StatsClient;
+import ru.practicum.explore_with_me.dto.Stat;
+import ru.practicum.explore_with_me.dto.StatWithCount;
 import ru.practicum.explore_with_me.event.dto.EventSort;
 import ru.practicum.explore_with_me.event.dto.EventState;
 import ru.practicum.explore_with_me.event.dto.StateAction;
@@ -22,6 +26,7 @@ import ru.practicum.explore_with_me.exception.*;
 import ru.practicum.explore_with_me.user.User;
 import ru.practicum.explore_with_me.user.UserRepository;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -43,6 +48,8 @@ public class EventService {
     private final CategoryRepository categoryRepository;
 
     private final RequestRepository requestRepository;
+
+    private final StatsClient statsClient;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -92,7 +99,7 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public Event getPublished(int eventId) {
+    public Event getPublished(int eventId, HttpServletRequest request) throws JsonProcessingException {
 
         Optional<Event> foundEvent = repository.findById(eventId);
         if (foundEvent.isPresent()) {
@@ -107,7 +114,9 @@ public class EventService {
                 throw new NotFoundException(String.format("User with id=%d was not found", event.getInitiatorId()),
                         "The required object was not found.");
             }
-            return fillInformation(List.of(event), null).get(0);
+            fillInformation(List.of(event), null);
+            fillStat(List.of(event), request);
+            return event;
         } else {
             throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
                     "The required object was not found.");
@@ -152,7 +161,8 @@ public class EventService {
     @Transactional(readOnly = true)
     public Page<Event> getAllForPublicWithFilters(String text, Integer[] categories, Boolean paid,
                                                   String rangeStart, String rangeEnd, Boolean onlyAvailable, String sort,
-                                                 Integer from, Integer size) {
+                                                 Integer from, Integer size,
+                                                  HttpServletRequest request) throws JsonProcessingException {
         String sortProperty = "eventDate";
         EventSort eventSort = null;
         if (sort != null && !sort.isBlank()) {
@@ -179,6 +189,7 @@ public class EventService {
         );
 
         List<Event> foundEvents = fillInformation(events.getContent(), onlyAvailable);
+        fillStat(foundEvents, request);
 
         return new PageImpl<>(foundEvents, PageRequest.of(from, size), foundEvents.size());
     }
@@ -425,5 +436,24 @@ public class EventService {
         }
 
         return StateAction.valueOf(requestedStateAction);
+    }
+
+    private void fillStat(List<Event> events, HttpServletRequest request) throws JsonProcessingException {
+        MutableHttpRequest wrappedRequest = new MutableHttpRequest(request);
+        wrappedRequest.addParameter("start", LocalDateTime.now().minusDays(180).format(formatter));
+        wrappedRequest.addParameter("end", LocalDateTime.now().format(formatter));
+
+        List<StatWithCount> statList = statsClient.getStats(wrappedRequest);
+        int hits = (int) statList.stream().filter(s -> Objects.equals(s.getUri(), request.getRequestURI())).count();
+        for (Event event : events) {
+            event.setViews(hits + 1);
+        }
+        Stat stat = new Stat();
+        stat.setIp(request.getRemoteAddr());
+        stat.setUri(request.getRequestURI());
+        stat.setTimestamp(LocalDateTime.now());
+        stat.setApp(request.getHeader("User-Agent"));
+        statsClient.hit(stat);
+
     }
 }
