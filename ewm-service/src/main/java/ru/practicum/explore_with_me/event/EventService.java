@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -50,6 +51,9 @@ public class EventService {
     private final RequestRepository requestRepository;
 
     private final StatsClient statsClient;
+
+    @Value("${stats-server.url}")
+    private String serverUrl;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -443,6 +447,7 @@ public class EventService {
         wrappedRequest.addParameter("start", LocalDateTime.now().minusDays(180).format(formatter));
         wrappedRequest.addParameter("end", LocalDateTime.now().format(formatter));
 
+        statsClient.setServerUrl(serverUrl);
         List<StatWithCount> statList = statsClient.getStats(wrappedRequest);
         int hits = (int) statList.stream().filter(s -> Objects.equals(s.getUri(), request.getRequestURI())).count();
         for (Event event : events) {
