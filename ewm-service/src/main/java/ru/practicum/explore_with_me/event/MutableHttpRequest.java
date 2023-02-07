@@ -51,7 +51,7 @@ public class MutableHttpRequest extends HttpServletRequestWrapper {
     @Override
     public String getQueryString() {
         StringBuilder builder = new StringBuilder();
-        for (String param : mutableParams.keySet()) {
+        for (String param : getParameterMap().keySet()) {
             builder.append(param).append("=")
                     .append(URLEncoder.encode(getParameter(param), StandardCharsets.UTF_8).replaceAll("\\+", "%20")).append("&");
         }
