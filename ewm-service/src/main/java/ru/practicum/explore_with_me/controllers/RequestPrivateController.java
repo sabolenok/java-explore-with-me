@@ -9,6 +9,8 @@ import ru.practicum.explore_with_me.event_request.dto.EventRequestDto;
 import ru.practicum.explore_with_me.event_request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.explore_with_me.event_request.dto.EventRequestStatusUpdateResult;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,8 +35,8 @@ public class RequestPrivateController {
 
     @GetMapping("/users/{userId}/requests")
     public List<EventRequestDto> getAll(@PathVariable Integer userId,
-                                      @RequestParam(required = false, defaultValue = "0") Integer from,
-                                      @RequestParam(required = false, defaultValue = "10") Integer size) {
+                                        @PositiveOrZero @RequestParam(required = false, defaultValue = "0") Integer from,
+                                        @Positive @RequestParam(required = false, defaultValue = "10") Integer size) {
         return requestService.getByUser(userId, from, size)
                 .stream().map(RequestMapper::toEventRequestDto).collect(Collectors.toList());
     }
@@ -47,8 +49,8 @@ public class RequestPrivateController {
 
     @GetMapping("/users/{userId}/events/{eventId}/requests")
     public List<EventRequestDto> getByUserAndEvent(@PathVariable Integer userId, @PathVariable Integer eventId,
-                                                   @RequestParam(required = false, defaultValue = "0") Integer from,
-                                                   @RequestParam(required = false, defaultValue = "10") Integer size) {
+                                                   @PositiveOrZero @RequestParam(required = false, defaultValue = "0") Integer from,
+                                                   @Positive @RequestParam(required = false, defaultValue = "10") Integer size) {
         return requestService.getByUserAndEvent(userId, eventId, from, size)
                 .stream().map(RequestMapper::toEventRequestDto).collect(Collectors.toList());
     }

@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.compilation.Compilation;
 import ru.practicum.explore_with_me.compilation.CompilationService;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -23,8 +25,8 @@ public class CompilationPublicController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/compilations")
     public List<Compilation> getAll(@RequestParam(required = false) Boolean pinned,
-                                             @RequestParam(required = false, defaultValue = "0") Integer from,
-                                             @RequestParam(required = false, defaultValue = "10") Integer size) {
+                                    @PositiveOrZero @RequestParam(required = false, defaultValue = "0") Integer from,
+                                    @Positive @RequestParam(required = false, defaultValue = "10") Integer size) {
         return compilationService.getAll(pinned, from, size);
     }
 }

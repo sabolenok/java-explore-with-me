@@ -105,7 +105,7 @@ public class CompilationService {
         return foundCompilations;
     }
 
-    static Specification<Compilation> isPinned(Boolean pinned) {
+    private Specification<Compilation> isPinned(Boolean pinned) {
         return (compilation, query, cb) -> pinned == null ? null : cb.equal(compilation.get("isPinned"), pinned);
     }
 

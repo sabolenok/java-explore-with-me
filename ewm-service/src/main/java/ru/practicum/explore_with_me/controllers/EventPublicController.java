@@ -9,6 +9,8 @@ import ru.practicum.explore_with_me.event.dto.EventFullDto;
 import ru.practicum.explore_with_me.event.dto.EventShortDto;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,9 +35,9 @@ public class EventPublicController {
                                        @RequestParam(required = false) String rangeEnd,
                                        @RequestParam(required = false) Boolean onlyAvailable,
                                        @RequestParam(required = false) String sort,
-                                       @RequestParam(required = false, defaultValue = "0") Integer from,
-                                       @RequestParam(required = false, defaultValue = "10") Integer size,
-                                   HttpServletRequest request) throws JsonProcessingException {
+                                       @PositiveOrZero @RequestParam(required = false, defaultValue = "0") Integer from,
+                                       @Positive @RequestParam(required = false, defaultValue = "10") Integer size,
+                                       HttpServletRequest request) throws JsonProcessingException {
         return eventService
                 .getAllForPublicWithFilters(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
                         sort, from, size, request)

@@ -11,6 +11,8 @@ import ru.practicum.explore_with_me.event.dto.NewEventDto;
 import ru.practicum.explore_with_me.event.dto.UpdateEventUserRequestDto;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,8 +42,8 @@ public class EventPrivateController {
 
     @GetMapping("/users/{userId}/events")
     public List<EventShortDto> getAll(@PathVariable Integer userId,
-                                      @RequestParam(required = false, defaultValue = "0") Integer from,
-                                      @RequestParam(required = false, defaultValue = "10") Integer size) {
+                                      @PositiveOrZero @RequestParam(required = false, defaultValue = "0") Integer from,
+                                      @Positive @RequestParam(required = false, defaultValue = "10") Integer size) {
         return eventService.getAll(userId, from, size)
                 .stream().map(EventMapper::toEventShortDto).collect(Collectors.toList());
     }

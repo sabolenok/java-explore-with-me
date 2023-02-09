@@ -7,6 +7,8 @@ import ru.practicum.explore_with_me.event.EventService;
 import ru.practicum.explore_with_me.event.dto.EventFullDto;
 import ru.practicum.explore_with_me.event.dto.UpdateEventAdminRequestDto;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,8 +31,8 @@ public class EventAdminController {
                                   @RequestParam(required = false) Integer[] categories,
                                   @RequestParam(required = false) String rangeStart,
                                   @RequestParam(required = false) String rangeEnd,
-                                  @RequestParam(required = false, defaultValue = "0") Integer from,
-                                  @RequestParam(required = false, defaultValue = "10") Integer size) {
+                                  @PositiveOrZero @RequestParam(required = false, defaultValue = "0") Integer from,
+                                  @Positive @RequestParam(required = false, defaultValue = "10") Integer size) {
         return eventService.getAllForAdminWithFilters(users, states, categories, rangeStart, rangeEnd, from, size)
                 .stream().map(EventMapper::toEventFullDto).collect(Collectors.toList());
     }

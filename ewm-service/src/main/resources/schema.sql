@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS events (
                                      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                                      annotation VARCHAR NOT NULL,
                                      description VARCHAR,
-                                     title VARCHAR NOT NULL,
+                                     title VARCHAR(1024) NOT NULL,
                                      state VARCHAR(50),
                                      created_on TIMESTAMP WITHOUT TIME ZONE,
                                      event_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,

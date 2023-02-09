@@ -57,6 +57,8 @@ public class EventService {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    private final int daysForStatsStartDate = 180;
+
     @Transactional
     public Event create(Event event, Integer userId) {
         checkEventDate(event, false);
@@ -234,12 +236,12 @@ public class EventService {
         return events;
     }
 
-    static Specification<Event> hasInitiatorIn(Integer[] userIds) {
+    private Specification<Event> hasInitiatorIn(Integer[] userIds) {
         return (event, query, cb) -> (userIds != null && userIds.length > 0)
                 ? event.get("initiatorId").in(userIds) : null;
     }
 
-    static Specification<Event> hasStatesIn(String[] states) {
+    private Specification<Event> hasStatesIn(String[] states) {
         if (states == null) {
             return null;
         }
@@ -247,37 +249,37 @@ public class EventService {
         return (event, query, cb) -> states.length > 0 ? event.get("state").in(st) : null;
     }
 
-    static Specification<Event> hasCategoriesIn(Integer[] categories) {
+    private Specification<Event> hasCategoriesIn(Integer[] categories) {
         return (event, query, cb) -> (categories != null && categories.length > 0)
                 ? event.get("categoryId").in(categories) : null;
     }
 
-    static Specification<Event> hasStartAfter(LocalDateTime rangeStart) {
+    private Specification<Event> hasStartAfter(LocalDateTime rangeStart) {
         return (event, query, cb) -> rangeStart == null ? null : cb.greaterThanOrEqualTo(event.get("eventDate"), rangeStart);
     }
 
-    static Specification<Event> hasEndBefore(LocalDateTime rangeEnd) {
+    private Specification<Event> hasEndBefore(LocalDateTime rangeEnd) {
         return (event, query, cb) -> rangeEnd == null ? null : cb.lessThanOrEqualTo(event.get("eventDate"), rangeEnd);
     }
 
-    static Specification<Event> hasStartAfterNow(LocalDateTime rangeStart) {
+    private Specification<Event> hasStartAfterNow(LocalDateTime rangeStart) {
         return (event, query, cb) -> rangeStart == null
                 ? cb.greaterThanOrEqualTo(event.get("eventDate"), LocalDateTime.now())
                 : cb.greaterThanOrEqualTo(event.get("eventDate"), rangeStart);
     }
 
-    static Specification<Event> hasAnnotationEqualText(String text) {
+    private Specification<Event> hasAnnotationEqualText(String text) {
         return (event, query, cb) -> (text == null || text.isBlank())
                 ? null
                 : cb.or(cb.like(cb.lower(event.get("annotation")), "%" + text.toLowerCase() + "%"),
                 cb.like(cb.lower(event.get("description")), "%" + text.toLowerCase() + "%"));
     }
 
-    static Specification<Event> isPaid(Boolean paid) {
+    private Specification<Event> isPaid(Boolean paid) {
         return (event, query, cb) -> paid == null ? null : cb.equal(event.get("isPaid"), paid);
     }
 
-    static Specification<Event> hasAvailable(Boolean onlyAvailable) {
+    private Specification<Event> hasAvailable(Boolean onlyAvailable) {
         return (event, query, cb) -> (onlyAvailable == null || !onlyAvailable)
                 ? null
                 : cb.greaterThan(event.get("participantLimit"), event.get("confirmedRequests"));
@@ -326,42 +328,15 @@ public class EventService {
     }
 
     private void fillInformationInUpdatedEvent(Event event, Event eventPrevious, String stateAction, boolean isAdmin) {
-        event.setCreatedOn(event.getCreatedOn() == null ? eventPrevious.getCreatedOn() : event.getCreatedOn());
-        if (event.getEventDate() != null) {
-            checkEventDate(event, isAdmin);
-        } else {
-            event.setEventDate(eventPrevious.getEventDate());
-        }
+        fillDatesInUpdatedEvent(event, eventPrevious, isAdmin);
 
-        Optional<Category> category;
-        if (event.getCategoryId() != null) {
-            category = categoryRepository.findById(event.getCategoryId());
-        } else {
-            category = categoryRepository.findById(eventPrevious.getCategoryId());
-        }
-        if (category.isPresent()) {
-            event.setCategory(category.get());
-            event.setCategoryId(category.get().getId());
-        }
+        fillCategoryInUpdatedEvent(event, eventPrevious);
 
-        Integer userId;
-        if (event.getInitiatorId() != null) {
-            userId = event.getInitiatorId();
-        } else {
-            userId = eventPrevious.getInitiatorId();
-        }
-        Optional<User> initiator = userRepository.findById(userId);
-        if (initiator.isPresent()) {
-            event.setInitiator(initiator.get());
-            event.setInitiatorId(initiator.get().getId());
-        } else {
-            throw new NotFoundException(String.format("User with id=%d was not found", userId),
-                    "The required object was not found.");
-        }
+        fillInitiatorInUpdatedEvent(event, eventPrevious);
 
-        int confirmedRequests = requestRepository.findByEventIdAndStatus(event.getId(), EventRequestState.CONFIRMED)
-                .size();
-        event.setConfirmedRequests(confirmedRequests);
+        fillConfirmedRequestsInEvent(event);
+
+        fillStateInUpdatedEvent(event, eventPrevious, stateAction);
 
         event.setDescription(event.getDescription() == null ? eventPrevious.getDescription() : event.getDescription());
         event.setAnnotation(event.getAnnotation() == null ? eventPrevious.getAnnotation() : event.getAnnotation());
@@ -372,10 +347,50 @@ public class EventService {
         event.setParticipantLimit(event.getParticipantLimit() == null
                 ? eventPrevious.getParticipantLimit() : event.getParticipantLimit());
         event.setLocation(event.getLocation() == null ? eventPrevious.getLocation() : event.getLocation());
+    }
 
+    private void fillDatesInUpdatedEvent(Event event, Event eventPrevious, boolean isAdmin) {
+        event.setCreatedOn(event.getCreatedOn() == null ? eventPrevious.getCreatedOn() : event.getCreatedOn());
+        if (event.getEventDate() != null) {
+            checkEventDate(event, isAdmin);
+        } else {
+            event.setEventDate(eventPrevious.getEventDate());
+        }
+    }
+
+    private void fillCategoryInUpdatedEvent(Event event, Event eventPrevious) {
+        Integer categoryId = event.getCategoryId() != null ? event.getCategoryId() : eventPrevious.getCategoryId();
+        Optional<Category> category = categoryRepository.findById(categoryId);
+
+        if (category.isPresent()) {
+            event.setCategory(category.get());
+            event.setCategoryId(categoryId);
+        }
+    }
+
+    private void fillInitiatorInUpdatedEvent(Event event, Event eventPrevious) {
+        Integer userId = event.getInitiatorId() != null ? event.getInitiatorId() : eventPrevious.getInitiatorId();
+        Optional<User> initiator = userRepository.findById(userId);
+
+        if (initiator.isEmpty()) {
+            throw new NotFoundException(String.format("User with id=%d was not found", userId),
+                    "The required object was not found.");
+        }
+
+        event.setInitiator(initiator.get());
+        event.setInitiatorId(userId);
+    }
+
+    private void fillConfirmedRequestsInEvent(Event event) {
+        int confirmedRequests = requestRepository.findByEventIdAndStatus(
+                event.getId(), EventRequestState.CONFIRMED
+                ).size();
+        event.setConfirmedRequests(confirmedRequests);
+    }
+
+    private void fillStateInUpdatedEvent(Event event, Event eventPrevious, String stateAction) {
         EventState currentState = event.getState() == null ? eventPrevious.getState() : event.getState();
         changeEventState(event, stateAction, currentState);
-
     }
 
     private void checkEventDate(Event event, boolean isAdmin) {
@@ -407,25 +422,10 @@ public class EventService {
                 event.setState(EventState.CANCELED);
                 break;
             case PUBLISH_EVENT:
-                if (currentState.equals(EventState.PENDING)) {
-                    event.setState(EventState.PUBLISHED);
-                    event.setPublishedOn(LocalDateTime.now());
-                } else {
-                    throw new EventStatusAdminException(
-                            String.format("Cannot publish the event because it's not in the right state: %s", currentState),
-                            "For the requested operation the conditions are not met."
-                    );
-                }
+                publishEvent(event, currentState);
                 break;
             case REJECT_EVENT:
-                if (!currentState.equals(EventState.PUBLISHED)) {
-                    event.setState(EventState.CANCELED);
-                } else {
-                    throw new EventStatusAdminException(
-                            String.format("Cannot publish the event because it's not in the right state: %s", currentState),
-                            "For the requested operation the conditions are not met."
-                    );
-                }
+                rejectEvent(event, currentState);
                 break;
             default:
                 throw new UnsupportedStateException("Unknown state: " + stateAction, "Incorrectly made request.");
@@ -442,9 +442,32 @@ public class EventService {
         return StateAction.valueOf(requestedStateAction);
     }
 
+    private void publishEvent(Event event, EventState currentState) {
+        if (currentState.equals(EventState.PENDING)) {
+            event.setState(EventState.PUBLISHED);
+            event.setPublishedOn(LocalDateTime.now());
+        } else {
+            throw new EventStatusAdminException(
+                    String.format("Cannot publish the event because it's not in the right state: %s", currentState),
+                    "For the requested operation the conditions are not met."
+            );
+        }
+    }
+
+    private void rejectEvent(Event event, EventState currentState) {
+        if (!currentState.equals(EventState.PUBLISHED)) {
+            event.setState(EventState.CANCELED);
+        } else {
+            throw new EventStatusAdminException(
+                    String.format("Cannot publish the event because it's not in the right state: %s", currentState),
+                    "For the requested operation the conditions are not met."
+            );
+        }
+    }
+
     private void fillStat(List<Event> events, HttpServletRequest request) throws JsonProcessingException {
         MutableHttpRequest wrappedRequest = new MutableHttpRequest(request);
-        wrappedRequest.addParameter("start", LocalDateTime.now().minusDays(180).format(formatter));
+        wrappedRequest.addParameter("start", LocalDateTime.now().minusDays(daysForStatsStartDate).format(formatter));
         wrappedRequest.addParameter("end", LocalDateTime.now().format(formatter));
 
         statsClient.setServerUrl(serverUrl);
