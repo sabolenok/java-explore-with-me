@@ -512,6 +512,7 @@ public class EventService {
 
     @Transactional
     public Comment putComment(Integer userId, Integer eventId, Integer commentId, Comment comment) {
+        comment.setId(commentId);
 
         Comment previousComment = findComment(commentId);
         comment.setEventId(comment.getEventId() == null ? previousComment.getEventId() : comment.getEventId());
