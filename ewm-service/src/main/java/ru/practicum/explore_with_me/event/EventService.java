@@ -55,9 +55,9 @@ public class EventService {
     @Value("${stats-server.url}")
     private String serverUrl;
 
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    private final int daysForStatsStartDate = 180;
+    private static final int DAYS_FOR_STATS_START_DATE = 180;
 
     @Transactional
     public Event create(Event event, Integer userId) {
@@ -148,8 +148,8 @@ public class EventService {
     @Transactional(readOnly = true)
     public Page<Event> getAllForAdminWithFilters(Integer[] users, String[] states, Integer[] categories,
                                                  String rangeStart, String rangeEnd, Integer from, Integer size) {
-        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, formatter);
-        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, formatter);
+        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, FORMATTER);
+        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, FORMATTER);
         Page<Event> events =  repository.findAll(
                 where(hasInitiatorIn(users))
                         .and(hasStatesIn(states))
@@ -178,8 +178,8 @@ public class EventService {
             }
             sortProperty = EventSort.VIEWS.equals(eventSort) ? "views" : "eventDate";
         }
-        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, formatter);
-        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, formatter);
+        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, FORMATTER);
+        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, FORMATTER);
 
         String[] states = { EventState.PENDING.toString() };
 
@@ -467,8 +467,8 @@ public class EventService {
 
     private void fillStat(List<Event> events, HttpServletRequest request) throws JsonProcessingException {
         MutableHttpRequest wrappedRequest = new MutableHttpRequest(request);
-        wrappedRequest.addParameter("start", LocalDateTime.now().minusDays(daysForStatsStartDate).format(formatter));
-        wrappedRequest.addParameter("end", LocalDateTime.now().format(formatter));
+        wrappedRequest.addParameter("start", LocalDateTime.now().minusDays(DAYS_FOR_STATS_START_DATE).format(FORMATTER));
+        wrappedRequest.addParameter("end", LocalDateTime.now().format(FORMATTER));
 
         statsClient.setServerUrl(serverUrl);
         List<StatWithCount> statList = statsClient.getStats(wrappedRequest);
