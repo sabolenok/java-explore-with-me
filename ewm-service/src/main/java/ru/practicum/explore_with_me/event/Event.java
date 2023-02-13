@@ -58,4 +58,6 @@ public class Event {
     @CollectionTable(name = "comments", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "id")
     private List<Integer> commentsIds;
+    @Transient
+    private List<Comment> comments;
 }

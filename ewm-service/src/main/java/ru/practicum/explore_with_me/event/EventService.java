@@ -219,6 +219,8 @@ public class EventService {
                     events.stream().map(Event::getId).collect(Collectors.toList()),
                     EventRequestState.CONFIRMED
             );
+            List<Comment> comments = commentRepository.findAllByEventIdIn(
+                    events.stream().map(Event::getId).collect(Collectors.toList()));
             for (Event event : events) {
                 if (foundCategories.containsKey(event.getCategoryId())) {
                     event.setCategory(foundCategories.get(event.getCategoryId()));
@@ -226,6 +228,7 @@ public class EventService {
                 if (foundInitiators.containsKey(event.getInitiatorId())) {
                     event.setInitiator(foundInitiators.get(event.getInitiatorId()));
                 }
+                fillCommentsInEvent(event, comments);
                 long confirmedRequests = requests.stream().filter(r -> r.getEventId() == event.getId()).count();
                 event.setConfirmedRequests((int) confirmedRequests);
                 if (onlyAvailable != null && onlyAvailable) {
@@ -338,6 +341,8 @@ public class EventService {
 
         fillConfirmedRequestsInEvent(event);
 
+        fillCommentsInEvent(event, commentRepository.findAllByEventIdIn(List.of(event.getId())));
+
         fillStateInUpdatedEvent(event, eventPrevious, stateAction);
 
         event.setDescription(event.getDescription() == null ? eventPrevious.getDescription() : event.getDescription());
@@ -388,6 +393,17 @@ public class EventService {
                 event.getId(), EventRequestState.CONFIRMED
                 ).size();
         event.setConfirmedRequests(confirmedRequests);
+    }
+
+    private void fillCommentsInEvent(Event event, List<Comment> comments) {
+        List<Comment> commentList = comments.stream()
+                .filter(c -> c.getEventId().equals(event.getId()))
+                .collect(Collectors.toList());
+        event.setComments(commentList);
+        List<Integer> commentIds = commentList.stream()
+                .map(Comment::getId)
+                .collect(Collectors.toList());
+        event.setCommentsIds(commentIds);
     }
 
     private void fillStateInUpdatedEvent(Event event, Event eventPrevious, String stateAction) {

@@ -6,6 +6,7 @@ import ru.practicum.explore_with_me.event_category.Category;
 import ru.practicum.explore_with_me.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class EventShortDto {
@@ -19,4 +20,5 @@ public class EventShortDto {
     private boolean paid;
     private String title;
     private int views;
+    private List<CommentDto> comments;
 }
