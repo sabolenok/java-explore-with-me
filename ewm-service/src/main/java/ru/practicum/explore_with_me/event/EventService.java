@@ -50,6 +50,8 @@ public class EventService {
 
     private final RequestRepository requestRepository;
 
+    private final CommentRepository commentRepository;
+
     private final StatsClient statsClient;
 
     @Value("${stats-server.url}")
@@ -483,5 +485,61 @@ public class EventService {
         stat.setApp(request.getHeader("User-Agent"));
         statsClient.hit(stat);
 
+    }
+
+    @Transactional
+    public Comment addComment(Integer userId, Integer eventId, Comment comment) {
+        checkUserForComment(userId, eventId, comment);
+        comment.setCreated(LocalDateTime.now());
+        return commentRepository.save(comment);
+    }
+
+    @Transactional
+    public Comment putComment(Integer userId, Integer eventId, Integer commentId, Comment comment) {
+
+        Comment previousComment = findComment(commentId);
+        comment.setEventId(comment.getEventId() == null ? previousComment.getEventId() : comment.getEventId());
+        comment.setAuthorId(comment.getAuthorId() == null ? previousComment.getAuthorId() : comment.getAuthorId());
+        comment.setCreated(comment.getCreated() == null ? previousComment.getCreated() : comment.getCreated());
+        comment.setText(comment.getText() == null ? previousComment.getText() : comment.getText());
+
+        checkUserForComment(userId, eventId, comment);
+
+        return commentRepository.save(comment);
+    }
+
+    @Transactional
+    public void deleteComment(Integer userId, Integer eventId, Integer commentId) {
+        checkUserForComment(userId, eventId, findComment(commentId));
+        commentRepository.deleteById(commentId);
+    }
+
+    private Comment findComment(Integer commentId) {
+        Optional<Comment> foundComment = commentRepository.findById(commentId);
+        if (foundComment.isEmpty()) {
+            throw new NotFoundException(String.format("Comment with id=%d was not found", commentId),
+                    "The required object was not found.");
+        }
+        return foundComment.get();
+    }
+
+    private void checkUserForComment(Integer userId, Integer eventId, Comment comment) {
+        Optional<User> foundUser = userRepository.findById(userId);
+        if (foundUser.isEmpty()) {
+            throw new NotFoundException(String.format("User with id=%d was not found", userId),
+                    "The required object was not found.");
+        }
+
+        Optional<Event> foundEvent = repository.findById(eventId);
+        if (foundEvent.isEmpty()) {
+            throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
+                    "The required object was not found.");
+        }
+
+        if (!userId.equals(comment.getAuthorId())
+            && !userId.equals(foundEvent.get().getInitiatorId())) {
+            throw new EventOwnerException(String.format("User with id=%d is not owner for event or comment", userId),
+                    "For the requested operation the conditions are not met.");
+        }
     }
 }
