@@ -5,9 +5,6 @@
 	<modules>
 		<module>ewm-service</module>
         <module>stats</module>
-		<module>stats/stats-server</module>
-		<module>stats/stats-client</module>
-		<module>stats/stats-dto</module>
 	</modules>
 
 	<parent>
