@@ -4,6 +4,9 @@ import org.springframework.stereotype.Component;
 import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.user.UserMapper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class EventMapper {
 
@@ -70,6 +73,14 @@ public class EventMapper {
         newEventDto.setCreatedOn(event.getCreatedOn());
         newEventDto.setPublishedOn(event.getPublishedOn());
         newEventDto.setState(event.getState());
+        List<CommentDto> commentsDto = new ArrayList<>();
+        List<Comment> comments = event.getComments();
+        if (comments != null) {
+            for (Comment comment : comments) {
+                commentsDto.add(CommentMapper.toCommentDto(comment));
+            }
+            newEventDto.setComments(commentsDto);
+        }
         return newEventDto;
     }
 
@@ -82,6 +93,14 @@ public class EventMapper {
         newEventDto.setTitle(event.getTitle());
         newEventDto.setInitiator(UserMapper.toUserShortDto(event.getInitiator()));
         newEventDto.setCategory(event.getCategory());
+        List<CommentDto> commentsDto = new ArrayList<>();
+        List<Comment> comments = event.getComments();
+        if (comments != null) {
+            for (Comment comment : comments) {
+                commentsDto.add(CommentMapper.toCommentDto(comment));
+            }
+            newEventDto.setComments(commentsDto);
+        }
         return newEventDto;
     }
 }

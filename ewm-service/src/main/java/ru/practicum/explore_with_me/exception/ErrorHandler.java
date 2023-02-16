@@ -92,7 +92,7 @@ public class ErrorHandler {
 
 
     @ExceptionHandler(ValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleValidationException(final ValidationException e) {
         return new ApiError(
                 "Incorrectly made request.",

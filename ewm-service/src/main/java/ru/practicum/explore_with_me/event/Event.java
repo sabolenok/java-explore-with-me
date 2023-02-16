@@ -9,6 +9,7 @@ import ru.practicum.explore_with_me.user.User;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "events")
@@ -53,4 +54,10 @@ public class Event {
     private Category category;
     @Embedded
     private Location location;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "comments", joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "id")
+    private List<Integer> commentsIds;
+    @Transient
+    private List<Comment> comments;
 }

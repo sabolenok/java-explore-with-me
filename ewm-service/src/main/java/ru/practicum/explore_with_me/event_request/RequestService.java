@@ -14,6 +14,7 @@ import ru.practicum.explore_with_me.event_request.dto.EventRequestDto;
 import ru.practicum.explore_with_me.event_request.dto.EventRequestStateAction;
 import ru.practicum.explore_with_me.event_request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.explore_with_me.event_request.dto.EventRequestStatusUpdateResult;
+import ru.practicum.explore_with_me.exception.DoubleEventRequestException;
 import ru.practicum.explore_with_me.exception.EventOwnerException;
 import ru.practicum.explore_with_me.exception.EventStatusException;
 import ru.practicum.explore_with_me.exception.NotFoundException;
@@ -43,7 +44,8 @@ public class RequestService {
 
         Optional<EventRequest> foundRequest = repository.findByRequesterIdAndEventId(userId, eventId);
         if (foundRequest.isPresent()) {
-            throw new EventOwnerException(String.format("Request to event %d from user %d already exists.", eventId, userId),
+            throw new DoubleEventRequestException(
+                    String.format("Request to event %d from user %d already exists.", eventId, userId),
                     "Integrity constraint has been violated.");
         }
 

@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS events_compilations;
 DROP TABLE IF EXISTS requests;
+DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS categories;
@@ -16,8 +17,8 @@ CREATE TABLE IF NOT EXISTS categories (
 );
 CREATE TABLE IF NOT EXISTS events (
                                      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                                     annotation VARCHAR NOT NULL,
-                                     description VARCHAR,
+                                     annotation VARCHAR(1024) NOT NULL,
+                                     description VARCHAR(1024),
                                      title VARCHAR(1024) NOT NULL,
                                      state VARCHAR(50),
                                      created_on TIMESTAMP WITHOUT TIME ZONE,
@@ -33,6 +34,15 @@ CREATE TABLE IF NOT EXISTS events (
                                      category_id BIGINT NOT NULL,
                                      CONSTRAINT fk_events_to_users FOREIGN KEY(initiator_id) REFERENCES users(id),
                                      CONSTRAINT fk_events_to_categories FOREIGN KEY(category_id) REFERENCES categories(id)
+);
+CREATE TABLE IF NOT EXISTS comments (
+                                    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                    "text" VARCHAR(200) NOT NULL,
+                                    event_id BIGINT NOT NULL,
+                                    author_id BIGINT NOT NULL,
+                                    created TIMESTAMP NOT NULL,
+                                    CONSTRAINT fk_comments_to_events FOREIGN KEY(event_id) REFERENCES events(id),
+                                    CONSTRAINT fk_comments_to_users FOREIGN KEY(author_id) REFERENCES users(id)
 );
 CREATE TABLE IF NOT EXISTS requests (
                                         id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

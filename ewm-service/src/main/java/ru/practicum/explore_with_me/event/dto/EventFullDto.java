@@ -7,6 +7,7 @@ import ru.practicum.explore_with_me.event_category.Category;
 import ru.practicum.explore_with_me.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class EventFullDto {
@@ -29,4 +30,5 @@ public class EventFullDto {
     private EventState state;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime publishedOn;
+    private List<CommentDto> comments;
 }

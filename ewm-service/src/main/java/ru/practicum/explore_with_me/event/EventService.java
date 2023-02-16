@@ -50,14 +50,16 @@ public class EventService {
 
     private final RequestRepository requestRepository;
 
+    private final CommentRepository commentRepository;
+
     private final StatsClient statsClient;
 
     @Value("${stats-server.url}")
     private String serverUrl;
 
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    private final int daysForStatsStartDate = 180;
+    private static final int DAYS_FOR_STATS_START_DATE = 180;
 
     @Transactional
     public Event create(Event event, Integer userId) {
@@ -148,8 +150,8 @@ public class EventService {
     @Transactional(readOnly = true)
     public Page<Event> getAllForAdminWithFilters(Integer[] users, String[] states, Integer[] categories,
                                                  String rangeStart, String rangeEnd, Integer from, Integer size) {
-        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, formatter);
-        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, formatter);
+        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, FORMATTER);
+        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, FORMATTER);
         Page<Event> events =  repository.findAll(
                 where(hasInitiatorIn(users))
                         .and(hasStatesIn(states))
@@ -178,8 +180,8 @@ public class EventService {
             }
             sortProperty = EventSort.VIEWS.equals(eventSort) ? "views" : "eventDate";
         }
-        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, formatter);
-        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, formatter);
+        LocalDateTime startDate = (rangeStart == null || rangeStart.isBlank()) ? null : LocalDateTime.parse(rangeStart, FORMATTER);
+        LocalDateTime endDate = (rangeEnd == null || rangeEnd.isBlank()) ? null : LocalDateTime.parse(rangeEnd, FORMATTER);
 
         String[] states = { EventState.PENDING.toString() };
 
@@ -217,6 +219,8 @@ public class EventService {
                     events.stream().map(Event::getId).collect(Collectors.toList()),
                     EventRequestState.CONFIRMED
             );
+            List<Comment> comments = commentRepository.findAllByEventIdIn(
+                    events.stream().map(Event::getId).collect(Collectors.toList()));
             for (Event event : events) {
                 if (foundCategories.containsKey(event.getCategoryId())) {
                     event.setCategory(foundCategories.get(event.getCategoryId()));
@@ -224,6 +228,7 @@ public class EventService {
                 if (foundInitiators.containsKey(event.getInitiatorId())) {
                     event.setInitiator(foundInitiators.get(event.getInitiatorId()));
                 }
+                fillCommentsInEvent(event, comments);
                 long confirmedRequests = requests.stream().filter(r -> r.getEventId() == event.getId()).count();
                 event.setConfirmedRequests((int) confirmedRequests);
                 if (onlyAvailable != null && onlyAvailable) {
@@ -336,6 +341,8 @@ public class EventService {
 
         fillConfirmedRequestsInEvent(event);
 
+        fillCommentsInEvent(event, commentRepository.findAllByEventIdIn(List.of(event.getId())));
+
         fillStateInUpdatedEvent(event, eventPrevious, stateAction);
 
         event.setDescription(event.getDescription() == null ? eventPrevious.getDescription() : event.getDescription());
@@ -386,6 +393,17 @@ public class EventService {
                 event.getId(), EventRequestState.CONFIRMED
                 ).size();
         event.setConfirmedRequests(confirmedRequests);
+    }
+
+    private void fillCommentsInEvent(Event event, List<Comment> comments) {
+        List<Comment> commentList = comments.stream()
+                .filter(c -> c.getEventId().equals(event.getId()))
+                .collect(Collectors.toList());
+        event.setComments(commentList);
+        List<Integer> commentIds = commentList.stream()
+                .map(Comment::getId)
+                .collect(Collectors.toList());
+        event.setCommentsIds(commentIds);
     }
 
     private void fillStateInUpdatedEvent(Event event, Event eventPrevious, String stateAction) {
@@ -467,8 +485,8 @@ public class EventService {
 
     private void fillStat(List<Event> events, HttpServletRequest request) throws JsonProcessingException {
         MutableHttpRequest wrappedRequest = new MutableHttpRequest(request);
-        wrappedRequest.addParameter("start", LocalDateTime.now().minusDays(daysForStatsStartDate).format(formatter));
-        wrappedRequest.addParameter("end", LocalDateTime.now().format(formatter));
+        wrappedRequest.addParameter("start", LocalDateTime.now().minusDays(DAYS_FOR_STATS_START_DATE).format(FORMATTER));
+        wrappedRequest.addParameter("end", LocalDateTime.now().format(FORMATTER));
 
         statsClient.setServerUrl(serverUrl);
         List<StatWithCount> statList = statsClient.getStats(wrappedRequest);
@@ -483,5 +501,62 @@ public class EventService {
         stat.setApp(request.getHeader("User-Agent"));
         statsClient.hit(stat);
 
+    }
+
+    @Transactional
+    public Comment addComment(Integer userId, Integer eventId, Comment comment) {
+        checkUserForComment(userId, eventId, comment);
+        comment.setCreated(LocalDateTime.now());
+        return commentRepository.save(comment);
+    }
+
+    @Transactional
+    public Comment putComment(Integer userId, Integer eventId, Integer commentId, Comment comment) {
+        comment.setId(commentId);
+
+        Comment previousComment = findComment(commentId);
+        comment.setEventId(comment.getEventId() == null ? previousComment.getEventId() : comment.getEventId());
+        comment.setAuthorId(comment.getAuthorId() == null ? previousComment.getAuthorId() : comment.getAuthorId());
+        comment.setCreated(comment.getCreated() == null ? previousComment.getCreated() : comment.getCreated());
+        comment.setText(comment.getText() == null ? previousComment.getText() : comment.getText());
+
+        checkUserForComment(userId, eventId, comment);
+
+        return commentRepository.save(comment);
+    }
+
+    @Transactional
+    public void deleteComment(Integer userId, Integer eventId, Integer commentId) {
+        checkUserForComment(userId, eventId, findComment(commentId));
+        commentRepository.deleteById(commentId);
+    }
+
+    private Comment findComment(Integer commentId) {
+        Optional<Comment> foundComment = commentRepository.findById(commentId);
+        if (foundComment.isEmpty()) {
+            throw new NotFoundException(String.format("Comment with id=%d was not found", commentId),
+                    "The required object was not found.");
+        }
+        return foundComment.get();
+    }
+
+    private void checkUserForComment(Integer userId, Integer eventId, Comment comment) {
+        Optional<User> foundUser = userRepository.findById(userId);
+        if (foundUser.isEmpty()) {
+            throw new NotFoundException(String.format("User with id=%d was not found", userId),
+                    "The required object was not found.");
+        }
+
+        Optional<Event> foundEvent = repository.findById(eventId);
+        if (foundEvent.isEmpty()) {
+            throw new NotFoundException(String.format("Event with id=%d was not found", eventId),
+                    "The required object was not found.");
+        }
+
+        if (!userId.equals(comment.getAuthorId())
+            && !userId.equals(foundEvent.get().getInitiatorId())) {
+            throw new EventOwnerException(String.format("User with id=%d is not owner for event or comment", userId),
+                    "For the requested operation the conditions are not met.");
+        }
     }
 }
